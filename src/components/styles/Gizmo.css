@@ -1,0 +1,46 @@
+.gizmo {
+    width: 100px;
+    height: 100px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    cursor: grab;
+    opacity: 0.4;
+    background: linear-gradient(90deg, white 50%, transparent 50%), linear-gradient(90deg, white 50%, transparent 50%), linear-gradient(0deg, white 50%, transparent 50%), linear-gradient(0deg, white 50%, transparent 50%);
+    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    background-size: 10px 1px, 10px 1px, 1px 10px, 1px 10px;
+    animation: border-dance 2s infinite linear;
+}
+
+.gizmo-handle {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    opacity: 0.6;
+    border: 1.5px solid white;
+}
+
+.gizmo-handle:nth-child(1) {
+    transform: translate(-50%,-50%);
+}
+.gizmo-handle:nth-child(2) {
+    transform: translate(50%,-50%);
+    margin-left: auto;
+}
+.gizmo-handle:nth-child(3) {
+    transform: translate(-50%,50%);
+    margin-top: auto;
+}
+.gizmo-handle:nth-child(4) {
+    transform: translate(50%,50%);
+    margin-left: auto;
+    margin-top: auto;
+}
+
+@keyframes border-dance {
+    0% {
+        background-position: 0 0, 100% 100%, 0 100%, 100% 0;
+    }
+    100% {
+        background-position: 100% 0, 0 100%, 0 0, 100% 100%;
+    }
+}
