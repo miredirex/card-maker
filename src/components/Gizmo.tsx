@@ -1,23 +1,28 @@
 import React from 'react'
 import './styles/Gizmo.css'
 
-interface GizmosProps {
+interface GizmoProps {
     isResizable: boolean
+    isVisible: boolean
 }
 
-export class Gizmo extends React.Component<GizmosProps> {
+export class Gizmo extends React.Component<GizmoProps> {
     render() {
-        if (this.props.isResizable) {
-            return (
-                <div className="gizmo">
-                    <div className="gizmo-handle"></div>
-                    <div className="gizmo-handle"></div>
-                    <div className="gizmo-handle"></div>
-                    <div className="gizmo-handle"></div>                
-                </div>
-            )
-        }
+        const gizmoClassName = this.props.isVisible ? 'gizmo' : ''
+        const handleClassName = (this.props.isVisible && this.props.isResizable) ? 'gizmo-handle' : ''
 
-        return <div className="gizmo"/>
+        return (
+            <div>
+                <div>
+                    {React.Children.only(this.props.children)}
+                </div>
+                <div className={gizmoClassName}>
+                    <div className={handleClassName}></div>
+                    <div className={handleClassName}></div>
+                    <div className={handleClassName}></div>
+                    <div className={handleClassName}></div>
+                </div>
+            </div>
+        )
     }
 }

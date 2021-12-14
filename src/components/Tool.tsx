@@ -3,9 +3,6 @@ import './styles/Tool.css'
 
 export enum ToolType {
     Select,
-    MoveSelected,
-    CropToSelect,
-    DeleteSelection,
     Text,
     Shape,
     Image,
@@ -13,12 +10,13 @@ export enum ToolType {
 
 interface ToolProps {
     toolType: ToolType
+    onClick: React.MouseEventHandler<HTMLButtonElement>;
 }
 
 export class Tool extends React.Component<ToolProps> {
     render() {
-        return <div className="tool" style={{ cursor: "pointer" }}>
+        return <button onClick={this.props.onClick} className="tool">
             {ToolType[this.props.toolType]}
-        </div>
+        </button>
     }
 }

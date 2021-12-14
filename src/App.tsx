@@ -1,25 +1,37 @@
-import React from 'react';
-import logo from './logo.svg';
+import { useState } from 'react';
 import './App.css';
 import Canvas from './components/Canvas';
 import { Tool, ToolType } from './components/Tool';
-import { Gizmo } from './components/Gizmo';
+import { FlexibleComponent } from './components/FlexibleComponent';
 
 function App() {
+  const [selectedTool, setTool] = useState(ToolType.Select)
+  const [images, setImages] = useState<string[]>([])
+  const [url, setUrl] = useState('')
+  const addImage = (url: string) => {
+    setImages(images.concat(url))
+  }
+
   return (
-    <div className="app">
+    <div>
       <header className="app-header">
-        <div className="tool-panel">
-          <Tool toolType={ToolType.Select} />
-          <Tool toolType={ToolType.MoveSelected} />
-          <Tool toolType={ToolType.CropToSelect} />
-          <Tool toolType={ToolType.DeleteSelection} />
-          <Tool toolType={ToolType.Text} />
-          <Tool toolType={ToolType.Shape} />
-          <Tool toolType={ToolType.Image} />
+        <div>
+          <span style={{fontSize: 14}}>https://picsum.photos/500/300/?random</span>
+          <div className="tool-panel">
+            <Tool onClick={() => setTool(ToolType.Select)} toolType={ToolType.Select} />
+            <Tool onClick={() => setTool(ToolType.Text)} toolType={ToolType.Text} />
+            <Tool onClick={() => setTool(ToolType.Shape)} toolType={ToolType.Shape} />
+            <Tool onClick={() => {setTool(ToolType.Image); addImage(url)}} toolType={ToolType.Image} />
+            <input value={url} placeholder="url" onChange={(e) => setUrl(e.target.value)} />
+          </div>
+          <Canvas tool={selectedTool}>
+            {images.map((url) => 
+              <FlexibleComponent key={url} isGizmoVisible={selectedTool === ToolType.Select} isResizable={true}>
+                <img style={{display: 'block'}} alt="" src={url} /> 
+              </FlexibleComponent>
+            )}
+          </Canvas>
         </div>
-        <Canvas />
-        <Gizmo isResizable={true} />
       </header>
     </div>
   );

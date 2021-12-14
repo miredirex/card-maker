@@ -1,7 +1,11 @@
 .tool {
-    margin: 5px;
+    margin-right: 5px;
+    margin-bottom: 5px;
     padding: 5px;
     background-color: aliceblue;
     color: black;
-    font-size: 0.8em;
+    font-size: 0.6em;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
 }
