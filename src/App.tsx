@@ -16,18 +16,23 @@ function App() {
     <div>
       <header className="app-header">
         <div>
-          <span style={{fontSize: 14}}>https://picsum.photos/500/300/?random</span>
+          <span style={{ fontSize: 14 }}>https://picsum.photos/500/300/?random</span>
           <div className="tool-panel">
             <Tool onClick={() => setTool(ToolType.Select)} toolType={ToolType.Select} />
             <Tool onClick={() => setTool(ToolType.Text)} toolType={ToolType.Text} />
             <Tool onClick={() => setTool(ToolType.Shape)} toolType={ToolType.Shape} />
-            <Tool onClick={() => {setTool(ToolType.Image); addImage(url)}} toolType={ToolType.Image} />
+            <Tool onClick={() => { setTool(ToolType.Image); addImage(url) }} toolType={ToolType.Image} />
             <input value={url} placeholder="url" onChange={(e) => setUrl(e.target.value)} />
           </div>
           <Canvas tool={selectedTool}>
-            {images.map((url) => 
-              <FlexibleComponent key={url} isGizmoVisible={selectedTool === ToolType.Select} isResizable={true}>
-                <img style={{display: 'block'}} alt="" src={url} /> 
+            {images.map((url) =>
+              <FlexibleComponent
+                key={url}
+                isDraggable={selectedTool === ToolType.Select}
+                isGizmoVisible={selectedTool === ToolType.Select}
+                isResizable={true}
+              >
+                <img style={{ display: 'block' }} alt="" src={url} />
               </FlexibleComponent>
             )}
           </Canvas>

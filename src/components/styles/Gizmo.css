@@ -21,7 +21,7 @@
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    border: 1.5px solid white;
+    border: 1.5px solid black;
 }
 
 .gizmo-handle:nth-child(1) {
