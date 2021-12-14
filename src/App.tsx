@@ -16,13 +16,13 @@ function App() {
     <div>
       <header className="app-header">
         <div>
-          <span style={{ fontSize: 14 }}>https://picsum.photos/500/300/?random</span>
+          <span onClick={() => setUrl('https://picsum.photos/500/300/?random')} style={{ fontSize: 14, cursor: 'pointer' }}>https://picsum.photos/500/300/?random</span>
           <div className="tool-panel">
             <Tool onClick={() => setTool(ToolType.Select)} toolType={ToolType.Select} />
             <Tool onClick={() => setTool(ToolType.Text)} toolType={ToolType.Text} />
             <Tool onClick={() => setTool(ToolType.Shape)} toolType={ToolType.Shape} />
             <Tool onClick={() => { setTool(ToolType.Image); addImage(url) }} toolType={ToolType.Image} />
-            <input value={url} placeholder="url" onChange={(e) => setUrl(e.target.value)} />
+            <input className="input-url-image" value={url} placeholder="url" onChange={(e) => setUrl(e.target.value)} />
           </div>
           <Canvas tool={selectedTool}>
             {images.map((url) =>
