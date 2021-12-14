@@ -1,5 +1,5 @@
 import React from 'react'
-import './styles/Gizmo.css'
+import 'components/styles/Gizmo.css'
 
 interface GizmoProps {
     isResizable: boolean

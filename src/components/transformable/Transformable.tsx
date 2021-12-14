@@ -1,37 +1,39 @@
 import React from "react";
-import { Gizmo } from "./Gizmo";
+import { Gizmo } from "components/Gizmo";
+import 'components/styles/Transformable.css'
+import { Drawable } from "./Drawable";
 
-export interface FlexibleProps {
+export interface TransformableProps {
     isResizable: boolean
     isDraggable: boolean
     isGizmoVisible: boolean
+    onClickApply: (tc: Drawable) => void
 }
 
-interface FlexibleState {
+interface DragState {
     moveX: number
     moveY: number
 }
 
-export class FlexibleComponent extends React.Component<FlexibleProps, FlexibleState> {
-    public static defaultProps: FlexibleProps = {
-        isResizable: true,
-        isDraggable: true,
-        isGizmoVisible: false
-    }
-
-    private beforeDragState: FlexibleState = {
+export abstract class Transformable<T extends TransformableProps> extends React.Component<T, DragState> implements Drawable {
+    private beforeDragState: DragState = {
         moveX: 0,
         moveY: 0
     }
+
     private isDragging: boolean = false
 
-    constructor(props: FlexibleProps) {
+    constructor(props: T) {
         super(props)
         this.state = {
             moveX: 0,
             moveY: 0,
         }
     }
+
+    abstract drawableElement: JSX.Element
+
+    abstract draw(canvas: HTMLCanvasElement): void
 
     handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
         e.preventDefault();
@@ -68,15 +70,15 @@ export class FlexibleComponent extends React.Component<FlexibleProps, FlexibleSt
 
     render() {
         return (
-            <div 
+            <div
                 onMouseDown={(event) => this.handleMouseDown(event)}
                 onMouseMove={(event) => this.handleMouseMove(event)}
                 onMouseUp={(event) => this.handleMouseUp(event)}
-                style={{ position: 'absolute', left: this.state.moveX, top: this.state.moveY }}
-            >
+                style={{ position: 'absolute', left: this.state.moveX, top: this.state.moveY }}>
                 <Gizmo isVisible={this.props.isGizmoVisible} isResizable={this.props.isResizable}>
-                    {React.Children.only(this.props.children)}
+                    {React.Children.only(this.drawableElement)}
                 </Gizmo>
+                <button onClick={() => this.props.onClickApply(this)} className="apply-button">✔</button>
             </div>
         )
     }

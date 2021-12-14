@@ -1,5 +1,5 @@
 import React from "react";
-import './styles/Tool.css'
+import 'components/styles/Tool.css'
 
 export enum ToolType {
     Select,

@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import './App.css';
-import Canvas from './components/Canvas';
-import { Tool, ToolType } from './components/Tool';
-import { FlexibleComponent } from './components/FlexibleComponent';
+import Canvas, { CANVAS_DEFAULT_HEIGHT, CANVAS_DEFAULT_WIDTH } from 'components/Canvas';
+import { Tool, ToolType } from 'components/Tool';
 
 function App() {
   const [selectedTool, setTool] = useState(ToolType.Select)
@@ -10,6 +9,9 @@ function App() {
   const [url, setUrl] = useState('')
   const addImage = (url: string) => {
     setImages(images.concat(url))
+  }
+  const removeImg = (index: number) => {
+    setImages(images.filter((_, i) => i !== index))
   }
 
   return (
@@ -24,18 +26,7 @@ function App() {
             <Tool onClick={() => { setTool(ToolType.Image); addImage(url) }} toolType={ToolType.Image} />
             <input className="input-url-image" value={url} placeholder="url" onChange={(e) => setUrl(e.target.value)} />
           </div>
-          <Canvas tool={selectedTool}>
-            {images.map((url) =>
-              <FlexibleComponent
-                key={url}
-                isDraggable={selectedTool === ToolType.Select}
-                isGizmoVisible={selectedTool === ToolType.Select}
-                isResizable={true}
-              >
-                <img style={{ display: 'block' }} alt="" src={url} />
-              </FlexibleComponent>
-            )}
-          </Canvas>
+          <Canvas width={CANVAS_DEFAULT_WIDTH} height={CANVAS_DEFAULT_HEIGHT} images={images} onRemoveImg={removeImg} tool={selectedTool} />
         </div>
       </header>
     </div>
