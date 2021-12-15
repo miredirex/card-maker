@@ -51,7 +51,7 @@ export default class Canvas extends React.Component<CanvasProps> {
                         url={url}
                         isDraggable={selectedTool === ToolType.Select}
                         isGizmoVisible={selectedTool === ToolType.Select}
-                        isResizable={true}
+                        isResizable={selectedTool === ToolType.Select}
                         onClickApply={(d) => { this.draw(d); this.removeImg(index) }}
                     />
                 )}

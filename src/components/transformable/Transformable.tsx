@@ -10,72 +10,125 @@ export interface TransformableProps {
     onClickApply: (tc: Drawable) => void
 }
 
-interface DragState {
-    moveX: number
-    moveY: number
+interface TransformState {
+    offsetX: number
+    offsetY: number
+    mouseX: number
+    mouseY: number
+    width: number
+    height: number
 }
 
-export abstract class Transformable<T extends TransformableProps> extends React.Component<T, DragState> implements Drawable {
-    private beforeDragState: DragState = {
-        moveX: 0,
-        moveY: 0
+enum TransformType {
+    Resize,
+    Drag
+}
+
+export abstract class Transformable<T extends TransformableProps> extends React.Component<T, TransformState> implements Drawable {
+    private preTransformState: TransformState = {
+        offsetX: 0,
+        offsetY: 0,
+        mouseX: 0,
+        mouseY: 0,
+        width: 0, // set later
+        height: 0,
     }
+    protected ref: React.RefObject<HTMLDivElement>
 
     private isDragging: boolean = false
+    private isResizing: boolean = false
 
     constructor(props: T) {
         super(props)
         this.state = {
-            moveX: 0,
-            moveY: 0,
+            offsetX: 0,
+            offsetY: 0,
+            mouseX: 0,
+            mouseY: 0,
+            width: 0,
+            height: 0,
         }
+        this.ref = React.createRef()
     }
 
     abstract drawableElement: JSX.Element
 
     abstract draw(canvas: HTMLCanvasElement): void
 
-    handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
-        e.preventDefault();
-
+    drag(e: React.MouseEvent<HTMLDivElement>) {
         if (!this.props.isDraggable) return
 
-        if (this.isDragging) {
-            const deltaX = e.clientX - this.beforeDragState.moveX
-            const deltaY = e.clientY - this.beforeDragState.moveY
+        if (this.isDragging && !this.isResizing) {
+            console.log("dragging");
+            const deltaX = e.clientX - this.preTransformState.mouseX
+            const deltaY = e.clientY - this.preTransformState.mouseY
 
             this.setState({
-                moveX: deltaX,
-                moveY: deltaY,
+                offsetX: this.preTransformState.offsetX + deltaX,
+                offsetY: this.preTransformState.offsetY + deltaY,
             })
         }
     }
 
-    handleMouseDown(e: React.MouseEvent<HTMLDivElement>) {
-        if (!this.props.isDraggable) return
+    resize(handleDivEvent: React.MouseEvent<HTMLDivElement>) {
+        if (!this.props.isResizable) return
 
-        this.beforeDragState = {
-            moveX: e.clientX - this.state.moveX,
-            moveY: e.clientY - this.state.moveY
+        if (this.isResizing && !this.isDragging) {
+            console.log("resizing");
+            
+            const deltaX = handleDivEvent.clientX - this.preTransformState.mouseX
+            const deltaY = handleDivEvent.clientY - this.preTransformState.mouseY
+
+            this.setState({
+                width: this.preTransformState.width + deltaX,
+                height: this.preTransformState.height + deltaY
+            })
         }
-
-        this.isDragging = true
     }
 
-    handleMouseUp(e: React.MouseEvent<HTMLDivElement>) {
+    onTransform(transformType: TransformType, e: React.MouseEvent<HTMLDivElement>) {
+        e.preventDefault();
+
+        console.log(TransformType[transformType]);
+        
+        switch (transformType) {
+            case TransformType.Drag: return this.drag(e)
+            case TransformType.Resize: return this.resize(e)
+        }
+    }
+
+    onTransformStart(transformType: TransformType, e: React.MouseEvent<HTMLDivElement>) {
         if (!this.props.isDraggable) return
 
+        if (this.isDragging || this.isResizing) return
+        
+        this.preTransformState = {
+            offsetX: this.ref.current!.offsetLeft,
+            offsetY: this.ref.current!.offsetTop,
+            mouseX: e.clientX,
+            mouseY: e.clientY,
+            width: this.ref.current!.offsetWidth,
+            height: this.ref.current!.offsetHeight
+        }
+
+        this.isDragging = transformType === TransformType.Drag
+        this.isResizing = transformType === TransformType.Resize
+    }
+
+    onTransformEnd(_e: React.MouseEvent<HTMLDivElement>) {
         this.isDragging = false
+        this.isResizing = false
     }
 
     render() {
         return (
-            <div
-                onMouseDown={(event) => this.handleMouseDown(event)}
-                onMouseMove={(event) => this.handleMouseMove(event)}
-                onMouseUp={(event) => this.handleMouseUp(event)}
-                style={{ position: 'absolute', left: this.state.moveX, top: this.state.moveY }}>
-                <Gizmo isVisible={this.props.isGizmoVisible} isResizable={this.props.isResizable}>
+            <div 
+                ref={this.ref}
+                onMouseDown={(event) => this.onTransformStart(TransformType.Drag, event)}
+                onMouseMove={(event) => this.onTransform(TransformType.Drag, event)}
+                onMouseUp={(event) => this.onTransformEnd(event)}
+                style={{ position: 'absolute', left: this.state.offsetX, top: this.state.offsetY, width: this.state.width, height: this.state.height }}>
+                <Gizmo onHandleDown={(e) => this.onTransformStart(TransformType.Resize, e)} onHandleMove={(e) => this.onTransform(TransformType.Resize, e)} isVisible={this.props.isGizmoVisible} isResizable={this.props.isResizable}>
                     {React.Children.only(this.drawableElement)}
                 </Gizmo>
                 <button onClick={() => this.props.onClickApply(this)} className="apply-button">✔</button>
