@@ -7,7 +7,7 @@ export interface TransformableProps {
     isResizable: boolean
     isDraggable: boolean
     isGizmoVisible: boolean
-    onClickApply: (tc: Drawable) => void
+    onClickApply?: (tc: Drawable) => void 
 }
 
 interface TransformState {
@@ -19,12 +19,12 @@ interface TransformState {
     height: number
 }
 
-enum TransformType {
+export enum TransformType {
     Resize,
     Drag
 }
 
-export abstract class Transformable<T extends TransformableProps> extends React.Component<T, TransformState> implements Drawable {
+export abstract class Transformable<T extends TransformableProps = TransformableProps> extends React.Component<T, TransformState> implements Drawable {
     private preTransformState: TransformState = {
         offsetX: 0,
         offsetY: 0,
@@ -51,7 +51,7 @@ export abstract class Transformable<T extends TransformableProps> extends React.
         this.ref = React.createRef()
     }
 
-    abstract drawableElement: JSX.Element
+    drawableElement?: JSX.Element
 
     abstract draw(canvas: HTMLCanvasElement): void
 
@@ -59,7 +59,6 @@ export abstract class Transformable<T extends TransformableProps> extends React.
         if (!this.props.isDraggable) return
 
         if (this.isDragging && !this.isResizing) {
-            console.log("dragging");
             const deltaX = e.clientX - this.preTransformState.mouseX
             const deltaY = e.clientY - this.preTransformState.mouseY
 
@@ -74,8 +73,6 @@ export abstract class Transformable<T extends TransformableProps> extends React.
         if (!this.props.isResizable) return
 
         if (this.isResizing && !this.isDragging) {
-            console.log("resizing");
-            
             const deltaX = handleDivEvent.clientX - this.preTransformState.mouseX
             const deltaY = handleDivEvent.clientY - this.preTransformState.mouseY
 
@@ -88,8 +85,6 @@ export abstract class Transformable<T extends TransformableProps> extends React.
 
     onTransform(transformType: TransformType, e: React.MouseEvent<HTMLDivElement>) {
         e.preventDefault();
-
-        console.log(TransformType[transformType]);
         
         switch (transformType) {
             case TransformType.Drag: return this.drag(e)
@@ -129,9 +124,9 @@ export abstract class Transformable<T extends TransformableProps> extends React.
                 onMouseUp={(event) => this.onTransformEnd(event)}
                 style={{ position: 'absolute', left: this.state.offsetX, top: this.state.offsetY, width: this.state.width, height: this.state.height }}>
                 <Gizmo onHandleDown={(e) => this.onTransformStart(TransformType.Resize, e)} onHandleMove={(e) => this.onTransform(TransformType.Resize, e)} isVisible={this.props.isGizmoVisible} isResizable={this.props.isResizable}>
-                    {React.Children.only(this.drawableElement)}
+                    {this.drawableElement}
                 </Gizmo>
-                <button onClick={() => this.props.onClickApply(this)} className="apply-button">✔</button>
+                {this.props.onClickApply && <button onClick={() => this.props.onClickApply?.(this)} className="apply-button">✔</button>}
             </div>
         )
     }

@@ -17,7 +17,7 @@ export class Gizmo extends React.Component<GizmoProps> {
         return (
             <div className="gizmo-container" style={{width: '100%', height: '100%'}}>
                 <div style={{width: '100%', height: '100%'}}>
-                    {React.Children.only(this.props.children)}
+                    {this.props.children}
                 </div>
                 <div className={gizmoClassName}>
                     <div className={handleClassName}/>
