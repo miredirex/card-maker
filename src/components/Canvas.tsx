@@ -17,10 +17,12 @@ interface CanvasProps {
 }
 
 interface CanvasState {
-    selectX: number
-    selectY: number
-    selectWidth: number
-    selectHeight: number
+    left: number,
+    right: number,
+    top: number,
+    bottom: number,
+    originalLeft: number,
+    originalTop: number,
     isSelectShown: boolean
 }
 
@@ -34,7 +36,7 @@ export default class Canvas extends React.Component<CanvasProps, CanvasState> {
         this.canvasRef = React.createRef()
         this.selectionRef = React.createRef()
         this.state = {
-            selectX: 0, selectY: 0, selectWidth: 0, selectHeight: 0, isSelectShown: true
+            left: 0, right: 0, top: 0, bottom: 0, originalLeft: 0, originalTop: 0, isSelectShown: false
         }
     }
 
@@ -62,11 +64,18 @@ export default class Canvas extends React.Component<CanvasProps, CanvasState> {
 
         this.isSelecting = true
 
+        const rect = this.canvasRef.current!.getBoundingClientRect()
+
+        const x = e.clientX - rect.x
+        const y = e.clientY - rect.y
+
         this.setState({
-            selectX: e.clientX - this.canvasRef.current!.getBoundingClientRect().x,
-            selectY: e.clientY - this.canvasRef.current!.getBoundingClientRect().y,
-            selectWidth: 0,
-            selectHeight: 0,
+            left: x,
+            top: y,
+            right: rect.width + x,
+            bottom: rect.height + y,
+            originalLeft: x,
+            originalTop: y,
             isSelectShown: true
         })
     }
@@ -75,12 +84,21 @@ export default class Canvas extends React.Component<CanvasProps, CanvasState> {
         if (this.props.images.length !== 0) return
         if (!this.isSelecting) return
 
-        const deltaX = e.clientX - this.state.selectX - this.canvasRef.current!.getBoundingClientRect().x
-        const deltaY = e.clientY - this.state.selectY - this.canvasRef.current!.getBoundingClientRect().y
+        const rect = this.canvasRef.current!.getBoundingClientRect()
+        
+        const deltaLeft = e.clientX - this.state.originalLeft - rect.x
+        const deltaTop = e.clientY - this.state.originalTop - rect.y
 
+        const left = this.state.originalLeft
+        const top = this.state.originalTop
+        const right = rect.width - (left + deltaLeft)
+        const bottom = rect.height - (top + deltaTop)
+        
         this.setState({
-            selectWidth: deltaX,
-            selectHeight: deltaY,
+            left: left,
+            right: right,
+            top: top,
+            bottom: bottom,
         })
     }
 
@@ -107,17 +125,16 @@ export default class Canvas extends React.Component<CanvasProps, CanvasState> {
 
         return (
             <div
+                className="canvas"
                 onMouseDown={(e) => this.onSelectStart(e)}
                 onMouseMove={(e) => this.onSelect(e)}
                 onMouseUp={(e) => this.onSelectEnd(e)}
-                className="canvas"
                 style={{
                     position: 'relative',
                     width: this.props.width,
                     height: this.props.height,
                     cursor: this.toolTypeToCursor(this.props.tool)
-                }
-                }
+                }}
             >
                 {this.props.images.map((url, index) =>
                     <ImageTransformable
@@ -132,12 +149,12 @@ export default class Canvas extends React.Component<CanvasProps, CanvasState> {
                 {this.state.isSelectShown &&
                     <SelectionTransformable
                         ref={this.selectionRef}
-                        x={this.state.selectX} 
-                        y={this.state.selectY}
-                        width={this.state.selectWidth}
-                        height={this.state.selectHeight}
-                        isResizable={true} 
-                        isDraggable={true} 
+                        left={this.state.left}
+                        right={this.state.right}
+                        top={this.state.top}
+                        bottom={this.state.bottom}
+                        isResizable={false}
+                        isDraggable={false}
                         isGizmoVisible={selectedTool === ToolType.Select} />
                 }
                 <canvas ref={this.canvasRef} width={this.props.width} height={this.props.height} id="canvas" />
