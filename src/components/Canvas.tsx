@@ -89,16 +89,16 @@ export default class Canvas extends React.Component<CanvasProps, CanvasState> {
         const deltaX = e.clientX - this.state.originalLeft - rect.x
         const deltaY = e.clientY - this.state.originalTop - rect.y
 
-        const left = this.state.originalLeft
-        const top = this.state.originalTop
-        const right = rect.width - (left + deltaX)
-        const bottom = rect.height - (top + deltaY)
+        const anchorX = this.state.originalLeft
+        const anchorY = this.state.originalTop
+        const x = anchorX + deltaX
+        const y = anchorY + deltaY
         
         this.setState({
-            left: deltaX > 0 ? left : left + deltaX,
-            right: deltaX < 0 ? rect.width - left : right,
-            top: deltaY > 0 ? top : top + deltaY,
-            bottom: deltaY < 0 ? rect.height - top : bottom,
+            left: deltaX > 0 ? anchorX : x,
+            right: rect.width - (deltaX < 0 ? anchorX : x),
+            top: deltaY > 0 ? anchorY : y,
+            bottom: rect.height - (deltaY < 0 ? anchorY : y),
         })
     }
 
