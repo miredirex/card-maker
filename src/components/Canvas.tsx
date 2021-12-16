@@ -86,19 +86,19 @@ export default class Canvas extends React.Component<CanvasProps, CanvasState> {
 
         const rect = this.canvasRef.current!.getBoundingClientRect()
         
-        const deltaLeft = e.clientX - this.state.originalLeft - rect.x
-        const deltaTop = e.clientY - this.state.originalTop - rect.y
+        const deltaX = e.clientX - this.state.originalLeft - rect.x
+        const deltaY = e.clientY - this.state.originalTop - rect.y
 
         const left = this.state.originalLeft
         const top = this.state.originalTop
-        const right = rect.width - (left + deltaLeft)
-        const bottom = rect.height - (top + deltaTop)
+        const right = rect.width - (left + deltaX)
+        const bottom = rect.height - (top + deltaY)
         
         this.setState({
-            left: left,
-            right: right,
-            top: top,
-            bottom: bottom,
+            left: deltaX > 0 ? left : left + deltaX,
+            right: deltaX < 0 ? rect.width - left : right,
+            top: deltaY > 0 ? top : top + deltaY,
+            bottom: deltaY < 0 ? rect.height - top : bottom,
         })
     }
 
