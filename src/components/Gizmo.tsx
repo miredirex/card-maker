@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { ReactNode } from 'react'
 import 'components/styles/Gizmo.css'
 
 interface GizmoProps {
@@ -8,24 +8,23 @@ interface GizmoProps {
     onHandleMove: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => void
 }
 
-export class Gizmo extends React.Component<GizmoProps> {
-    render() {
-        const gizmoClassName = this.props.isVisible ? 'gizmo' : ''
-        const handleClassName = (this.props.isVisible && this.props.isResizable) ? 'gizmo-handle' : ''
+export function Gizmo(props: React.PropsWithChildren<GizmoProps>) {
+    const gizmoClassName = props.isVisible ? 'gizmo' : ''
+    const handleClassName = (props.isVisible && props.isResizable) ? 'gizmo-handle' : ''
 
-        // TODO: сделать изменение размера при помощи других хэндлов, а не только при помощи правого нижнего
-        return (
-            <div className="gizmo-container" style={{width: '100%', height: '100%'}}>
-                <div style={{width: '100%', height: '100%'}}>
-                    {this.props.children}
-                </div>
-                <div className={gizmoClassName}>
-                    <div className={handleClassName}/>
-                    <div className={handleClassName}/>
-                    <div className={handleClassName}/>
-                    <div className={handleClassName} onMouseDown={this.props.onHandleDown} onMouseMove={this.props.onHandleMove}/>
-                </div>
+    // TODO: сделать изменение размера при помощи других хэндлов, а не только при помощи правого нижнего
+    // TODO: привязать onMouseMove к канваса, а не к этому div'у
+    return (
+        <div className="gizmo-container" style={{width: '100%', height: '100%'}}>
+            <div style={{width: '100%', height: '100%'}}>
+                {props.children}
             </div>
-        )
-    }
+            <div className={gizmoClassName}>
+                <div className={handleClassName}/>
+                <div className={handleClassName}/>
+                <div className={handleClassName}/>
+                <div className={handleClassName} onMouseDown={props.onHandleDown} onMouseMove={props.onHandleMove}/>
+            </div>
+        </div>
+    )
 }
