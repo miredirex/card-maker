@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import 'components/styles/Canvas.css'
 import { ToolType } from 'components/Tool';
-import { ImageTransformable } from 'components/transformable/ImageTransformable';
-import { Drawable } from './transformable/Drawable';
-import { SelectionTransformable } from './transformable/SelectionTransformable';
+import Transformable, { TransformData } from './Transformable';
+import { Rect } from 'geometry/Rect';
 
 export const CANVAS_DEFAULT_WIDTH = 800;
 export const CANVAS_DEFAULT_HEIGHT = 600;
@@ -16,162 +15,227 @@ interface CanvasProps {
     onRemoveImg: (index: number) => void
 }
 
-interface CanvasState {
-    left: number,
-    right: number,
-    top: number,
-    bottom: number,
-    originalLeft: number,
-    originalTop: number,
-    isSelectShown: boolean
+interface SelectionState {
+    left: number
+    top: number
+    width: number
+    height: number
+    originalLeft: number
+    originalTop: number
 }
 
-export default class Canvas extends React.Component<CanvasProps, CanvasState> {
-    private canvasRef: React.RefObject<HTMLCanvasElement>
-    private selectionRef: React.RefObject<SelectionTransformable>
-    private isSelecting: boolean = false
-
-    constructor(props: CanvasProps) {
-        super(props)
-        this.canvasRef = React.createRef()
-        this.selectionRef = React.createRef()
-        this.state = {
-            left: 0, right: 0, top: 0, bottom: 0, originalLeft: 0, originalTop: 0, isSelectShown: false
-        }
-    }
-
-    componentDidMount() {
-        document.addEventListener("keydown", (e) => this.handleKeyPress(e))
-    }
-
-    componentWillUnmount() {
-        document.removeEventListener("keydown", (e) => this.handleKeyPress(e))
-    }
-
-    draw(drawable: Drawable) {
-        if (this.canvasRef.current) {
-            drawable.draw(this.canvasRef.current)
-        }
-    }
-
-    // todo: можно ли сделать лучше через стейт? стоит ли выносить callback через пропсы?
-    removeImg(index: number) {
-        this.props.onRemoveImg(index)
-    }
-
-    onSelectStart(e: React.MouseEvent<HTMLDivElement>) {
-        if (this.props.images.length !== 0) return
-
-        this.isSelecting = true
-
-        const rect = this.canvasRef.current!.getBoundingClientRect()
-
-        const x = e.clientX - rect.x
-        const y = e.clientY - rect.y
-
-        this.setState({
-            left: x,
-            top: y,
-            right: rect.width + x,
-            bottom: rect.height + y,
-            originalLeft: x,
-            originalTop: y,
-            isSelectShown: true
-        })
-    }
-
-    onSelect(e: React.MouseEvent<HTMLDivElement>) {
-        if (this.props.images.length !== 0) return
-        if (!this.isSelecting) return
-
-        const rect = this.canvasRef.current!.getBoundingClientRect()
-        
-        const deltaX = e.clientX - this.state.originalLeft - rect.x
-        const deltaY = e.clientY - this.state.originalTop - rect.y
-
-        const anchorX = this.state.originalLeft
-        const anchorY = this.state.originalTop
-        const x = anchorX + deltaX
-        const y = anchorY + deltaY
-        
-        this.setState({
-            left: deltaX > 0 ? anchorX : x,
-            right: rect.width - (deltaX < 0 ? anchorX : x),
-            top: deltaY > 0 ? anchorY : y,
-            bottom: rect.height - (deltaY < 0 ? anchorY : y),
-        })
-    }
-
-    onSelectEnd(e: React.MouseEvent<HTMLDivElement>) {
-        this.isSelecting = false
-    }
-
-    removeSelection() {
-        this.setState({
-            isSelectShown: false
-        })
-    }
-
-    handleKeyPress(e: KeyboardEvent) {
-        if (e.code === 'Delete' && this.canvasRef.current) {
-            this.selectionRef.current?.clearArea(this.canvasRef.current)
-        }
-    }
-
-    render() {
-        const selectedTool = this.props.tool
-
-        // todo: FC + useEffect
-
-        return (
-            <div
-                className="canvas"
-                onMouseDown={(e) => this.onSelectStart(e)}
-                onMouseMove={(e) => this.onSelect(e)}
-                onMouseUp={(e) => this.onSelectEnd(e)}
-                style={{
-                    position: 'relative',
-                    width: this.props.width,
-                    height: this.props.height,
-                    cursor: this.toolTypeToCursor(this.props.tool)
-                }}
-            >
-                {this.props.images.map((url, index) =>
-                    <ImageTransformable
-                        key={`${url}${index}`}
-                        url={url}
-                        isDraggable={selectedTool === ToolType.Select}
-                        isGizmoVisible={selectedTool === ToolType.Select}
-                        isResizable={selectedTool === ToolType.Select}
-                        onClickApply={(d) => { this.draw(d); this.removeImg(index) }}
-                    />
-                )}
-                {this.state.isSelectShown &&
-                    <SelectionTransformable
-                        ref={this.selectionRef}
-                        left={this.state.left}
-                        right={this.state.right}
-                        top={this.state.top}
-                        bottom={this.state.bottom}
-                        isResizable={false}
-                        isDraggable={false}
-                        isGizmoVisible={selectedTool === ToolType.Select} />
-                }
-                <canvas ref={this.canvasRef} width={this.props.width} height={this.props.height} id="canvas" />
-            </div>
-        )
-    }
-
-    private toolTypeToCursor(toolType: ToolType): string {
-        switch (toolType) {
-            case ToolType.Select:
-                return 'crosshair'
-            case ToolType.Text:
-                return 'text'
-            case ToolType.Shape:
-                return 'copy'
-            default:
-                return 'default'
-        }
+function toolTypeToCursor(toolType: ToolType): string {
+    switch (toolType) {
+        case ToolType.Select:
+            return 'crosshair'
+        case ToolType.Text:
+            return 'text'
+        case ToolType.Shape:
+            return 'copy'
+        default:
+            return 'default'
     }
 }
+
+const Canvas = (props: CanvasProps) => {
+    const [isSelectionShown, setSelectionIsVisible] = useState(false)
+    const [isSelecting, setIsSelecting] = useState(false)
+    const [isTransforming, setIsTransforming] = useState(false)
+    const [transformData, setTransformData] = useState<TransformData>()
+    const [selectionTransformData, setSelectionTransformData] = useState<TransformData>()
+    const canvasRef = useRef<HTMLCanvasElement>(null)
+    const imageRefs = useRef<HTMLImageElement[]>([])
+    // TODO: можно ли лучше?
+    const transformableRefs = useRef<HTMLDivElement[]>([])
+
+    useEffect(() => {
+        imageRefs.current = imageRefs.current.slice(0, props.images.length)
+    }, [props.images])
+
+    useEffect(() => {
+        document.addEventListener('keydown', handleKeyPress)
+
+        return () => {
+            document.removeEventListener('keydown', handleKeyPress)
+        }
+    })
+
+    function getCanvasRect(): DOMRect {
+        return canvasRef.current!.getBoundingClientRect()
+    }
+
+    function onSetHasStartedTransform(mouseX: number, mouseY: number, preTransformRect: Rect) {
+        const canvasRect = getCanvasRect()
+
+        setIsSelecting(false)
+        setSelectionIsVisible(false)
+        setIsTransforming(true)
+
+        setTransformData({
+            mouseX: mouseX,
+            mouseY: mouseY,
+            startMouseX: mouseX,
+            startMouseY: mouseY,
+            preTransformRect: preTransformRect,
+            canvasX: canvasRect.x,
+            canvasY: canvasRect.y
+        })
+    }
+
+    function onSetHasEndedTransform() {
+        setIsTransforming(false)
+    }
+
+    function drawImage(index: number) {
+        let ctx = canvasRef.current!.getContext('2d')
+        const transformable = transformableRefs.current[index]
+        const image = imageRefs.current[index]
+        if (transformable) {
+            ctx?.drawImage(
+                image,
+                transformable.offsetLeft,
+                transformable.offsetTop,
+                transformable.offsetWidth,
+                transformable.offsetHeight
+            )
+        }
+    }
+
+    function drawImages() {
+        props.images.forEach((_url, i) => {
+            drawImage(i)
+        })
+    }
+
+    function removeImage(index: number) {
+        props.onRemoveImg(index)
+    }
+
+    function removeImages() {
+        props.images.forEach((_url, i) => {
+            removeImage(i)
+        })
+    }
+
+    function onSelectStart(e: React.MouseEvent<HTMLDivElement>) {
+        if (props.images.length !== 0) return
+
+        setIsSelecting(true)
+        setSelectionIsVisible(true)
+
+        const canvasRect = canvasRef.current!.getBoundingClientRect()
+
+        setSelectionTransformData({
+            mouseX: e.clientX,
+            mouseY: e.clientY,
+            startMouseX: e.clientX,
+            startMouseY: e.clientY,
+            canvasX: canvasRect.x,
+            canvasY: canvasRect.y,
+            preTransformRect: {
+                left: e.clientX - canvasRect.x,
+                top: e.clientY - canvasRect.y,
+                width: 0,
+                height: 0
+            }
+        })
+    }
+
+    function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+        e.preventDefault()
+
+        if (isTransforming && transformData) {
+            const canvasRect = canvasRef.current!.getBoundingClientRect()
+            setTransformData({
+                mouseX: e.clientX,
+                mouseY: e.clientY,
+                startMouseX: transformData.startMouseX,
+                startMouseY: transformData.startMouseY,
+                canvasX: canvasRect.x,
+                canvasY: canvasRect.y,
+                preTransformRect: transformData.preTransformRect
+            })
+        } else if (isSelecting && selectionTransformData) {
+            const canvasRect = canvasRef.current!.getBoundingClientRect()
+            setSelectionTransformData({
+                mouseX: e.clientX,
+                mouseY: e.clientY,
+                startMouseX: selectionTransformData.startMouseX,
+                startMouseY: selectionTransformData.startMouseY,
+                canvasX: canvasRect.x,
+                canvasY: canvasRect.y,
+                preTransformRect: selectionTransformData.preTransformRect
+            })
+        }
+    }
+
+    function eraseSelectedArea() {
+        let ctx = canvasRef.current!.getContext('2d')
+        if (selectionTransformData && isSelectionShown) {
+            const eraseWidth = selectionTransformData.mouseX - selectionTransformData.startMouseX
+            const eraseHeight = selectionTransformData.mouseY - selectionTransformData.startMouseY
+            ctx?.clearRect(selectionTransformData.preTransformRect.left, selectionTransformData.preTransformRect.top, eraseWidth, eraseHeight)
+        }
+    }
+
+    function handleKeyPress(e: KeyboardEvent) {
+        if (!canvasRef.current) return
+
+        switch (e.code) {
+            case 'Delete':
+                eraseSelectedArea()
+                break;
+            case 'Enter':
+                drawImages()
+                removeImages()
+                break;
+        }
+    }
+
+    const selectedTool = props.tool
+
+    return (
+        <div
+            className="canvas"
+            onMouseDown={(e) => onSelectStart(e)}
+            onMouseMove={(e) => handleMouseMove(e)}
+            onMouseUp={() => { setIsTransforming(false); setIsSelecting(false) }}
+            style={{
+                position: 'relative',
+                width: props.width,
+                height: props.height,
+                cursor: toolTypeToCursor(props.tool)
+            }}>
+
+            {props.images.map((url, index) =>
+                <Transformable
+                    key={index}
+                    ref={(el: HTMLDivElement) => transformableRefs.current[index] = el!}
+                    isDraggable={selectedTool === ToolType.Select}
+                    isGizmoVisible={selectedTool === ToolType.Select}
+                    isResizable={selectedTool === ToolType.Select}
+                    canvasWidth={props.width}
+                    canvasHeight={props.height}
+                    transformData={transformData}
+                    forceResize={false}
+                    setHasStartedTransform={onSetHasStartedTransform}
+                    setHasEndedTransform={onSetHasEndedTransform}>
+                    <img ref={el => imageRefs.current[index] = el!} src={url} style={{ display: 'block', width: '100%', height: '100%' }} alt="" />
+                </Transformable>
+            )}
+            {isSelectionShown &&
+                <Transformable
+                    isResizable={false}
+                    isDraggable={false}
+                    canvasWidth={props.width}
+                    canvasHeight={props.height}
+                    forceResize={true}
+                    transformData={selectionTransformData}
+                    isGizmoVisible={selectedTool === ToolType.Select} />
+            }
+            <canvas id="canvas" ref={canvasRef} width={props.width} height={props.height} />
+        </div>
+    )
+}
+
+export default Canvas

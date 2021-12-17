@@ -13,8 +13,10 @@ interface ToolProps {
     onClick: React.MouseEventHandler<HTMLButtonElement>;
 }
 
-export function Tool(props: ToolProps) {
+const Tool = (props: ToolProps) => {
     return <button onClick={props.onClick} className="tool">
         {ToolType[props.toolType]}
     </button>
 }
+
+export default Tool
