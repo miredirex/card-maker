@@ -14,7 +14,7 @@ interface ToolProps {
 }
 
 const Tool = (props: ToolProps) => {
-    return <button onClick={props.onClick} className="tool">
+    return <button onClick={props.onClick} className="toolbar-item">
         {ToolType[props.toolType]}
     </button>
 }

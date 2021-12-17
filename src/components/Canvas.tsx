@@ -12,6 +12,7 @@ interface CanvasProps {
     height: number
     tool: ToolType
     images: string[]
+    canvasRef: React.RefObject<HTMLCanvasElement>
     onRemoveImg: (index: number) => void
 }
 
@@ -43,7 +44,6 @@ const Canvas = (props: CanvasProps) => {
     const [isTransforming, setIsTransforming] = useState(false)
     const [transformData, setTransformData] = useState<TransformData>()
     const [selectionTransformData, setSelectionTransformData] = useState<TransformData>()
-    const canvasRef = useRef<HTMLCanvasElement>(null)
     const imageRefs = useRef<HTMLImageElement[]>([])
     // TODO: можно ли лучше?
     const transformableRefs = useRef<HTMLDivElement[]>([])
@@ -61,7 +61,7 @@ const Canvas = (props: CanvasProps) => {
     })
 
     function getCanvasRect(): DOMRect {
-        return canvasRef.current!.getBoundingClientRect()
+        return props.canvasRef.current!.getBoundingClientRect()
     }
 
     function onSetHasStartedTransform(mouseX: number, mouseY: number, preTransformRect: Rect) {
@@ -87,7 +87,7 @@ const Canvas = (props: CanvasProps) => {
     }
 
     function drawImage(index: number) {
-        let ctx = canvasRef.current!.getContext('2d')
+        let ctx = props.canvasRef.current!.getContext('2d')
         const transformable = transformableRefs.current[index]
         const image = imageRefs.current[index]
         if (transformable) {
@@ -123,7 +123,7 @@ const Canvas = (props: CanvasProps) => {
         setIsSelecting(true)
         setSelectionIsVisible(true)
 
-        const canvasRect = canvasRef.current!.getBoundingClientRect()
+        const canvasRect = props.canvasRef.current!.getBoundingClientRect()
 
         setSelectionTransformData({
             mouseX: e.clientX,
@@ -145,7 +145,7 @@ const Canvas = (props: CanvasProps) => {
         e.preventDefault()
 
         if (isTransforming && transformData) {
-            const canvasRect = canvasRef.current!.getBoundingClientRect()
+            const canvasRect = props.canvasRef.current!.getBoundingClientRect()
             setTransformData({
                 mouseX: e.clientX,
                 mouseY: e.clientY,
@@ -156,7 +156,7 @@ const Canvas = (props: CanvasProps) => {
                 preTransformRect: transformData.preTransformRect
             })
         } else if (isSelecting && selectionTransformData) {
-            const canvasRect = canvasRef.current!.getBoundingClientRect()
+            const canvasRect = props.canvasRef.current!.getBoundingClientRect()
             setSelectionTransformData({
                 mouseX: e.clientX,
                 mouseY: e.clientY,
@@ -170,7 +170,7 @@ const Canvas = (props: CanvasProps) => {
     }
 
     function eraseSelectedArea() {
-        let ctx = canvasRef.current!.getContext('2d')
+        let ctx = props.canvasRef.current!.getContext('2d')
         if (selectionTransformData && isSelectionShown) {
             const eraseWidth = selectionTransformData.mouseX - selectionTransformData.startMouseX
             const eraseHeight = selectionTransformData.mouseY - selectionTransformData.startMouseY
@@ -179,7 +179,7 @@ const Canvas = (props: CanvasProps) => {
     }
 
     function handleKeyPress(e: KeyboardEvent) {
-        if (!canvasRef.current) return
+        if (!props.canvasRef.current) return
 
         switch (e.code) {
             case 'Delete':
@@ -220,7 +220,7 @@ const Canvas = (props: CanvasProps) => {
                     forceResize={false}
                     setHasStartedTransform={onSetHasStartedTransform}
                     setHasEndedTransform={onSetHasEndedTransform}>
-                    <img ref={el => imageRefs.current[index] = el!} src={url} style={{ display: 'block', width: '100%', height: '100%' }} alt="" />
+                    <img crossOrigin='anonymous' ref={el => imageRefs.current[index] = el!} src={url} style={{ display: 'block', width: '100%', height: '100%' }} alt="" />
                 </Transformable>
             )}
             {isSelectionShown &&
@@ -233,7 +233,7 @@ const Canvas = (props: CanvasProps) => {
                     transformData={selectionTransformData}
                     isGizmoVisible={selectedTool === ToolType.Select} />
             }
-            <canvas id="canvas" ref={canvasRef} width={props.width} height={props.height} />
+            <canvas id="canvas" ref={props.canvasRef} width={props.width} height={props.height} />
         </div>
     )
 }
