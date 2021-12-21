@@ -3,7 +3,7 @@ import 'components/styles/Tool.css'
 
 interface ActionProps {
     id: string,
-    icon?: React.ReactElement,
+    icon: React.ReactElement,
     onClick: React.MouseEventHandler<HTMLButtonElement>;
 }
 

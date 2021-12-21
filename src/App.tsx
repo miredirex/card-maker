@@ -58,19 +58,18 @@ function App() {
                 <div>
                     <div className="tool-panel">
                         <div className="buttons-container">
-                            <Action id="file-menu" onClick={() => { }}><ChevronDownIcon /> File</Action>
-                            <Tool icon={<FrameIcon />} onClick={() => setTool(ToolType.Select)} toolType={ToolType.Select} />
-                            <Tool icon={<CursorTextIcon />} onClick={() => setTool(ToolType.Text)} toolType={ToolType.Text} />
-                            <Tool icon={<PyramidIcon />} onClick={() => setTool(ToolType.Shape)} toolType={ToolType.Shape} />
-                            <Tool icon={<DiceIcon />} onClick={() => { setTool(ToolType.RandomImage); addImage(url) }} toolType={ToolType.RandomImage} />
+                            <Action icon={<ChevronDownIcon />} id="action-file-menu" onClick={() => { }}>File</Action>
+                            <Tool isSelected={selectedTool === ToolType.Select} icon={<FrameIcon />} onClick={() => setTool(ToolType.Select)} toolType={ToolType.Select} />
+                            <Tool isSelected={selectedTool === ToolType.Text} icon={<CursorTextIcon />} onClick={() => setTool(ToolType.Text)} toolType={ToolType.Text} />
+                            <Tool isSelected={selectedTool === ToolType.Shape} icon={<PyramidIcon />} onClick={() => setTool(ToolType.Shape)} toolType={ToolType.Shape} />
+                            <Action id="action-random-image" icon={<DiceIcon />} onClick={() => addImage(url)}>Random Image</Action>
                         </div>
                         <div className="buttons-container">
-                            <Action id="import" onClick={(e) => importImage(e.currentTarget)}>
-                                {<FileImportIcon />}
+                            <Action icon={<FileImportIcon />} id="action-import" onClick={(e) => importImage(e.currentTarget)}>
                                 <input accept=".jpg, .jpeg, .png" onChange={onImageImported} ref={importInputRef} id="import-input" type="file" hidden />
                                 Import...
                             </Action>
-                            <Action id="export" onClick={() => exportImage('png')}>{<FileExportIcon />}Export...</Action>
+                            <Action icon={<FileExportIcon />} id="action-export" onClick={() => exportImage('png')}>Export...</Action>
                         </div>
                     </div>
                     <Canvas
