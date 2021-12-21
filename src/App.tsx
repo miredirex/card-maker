@@ -30,6 +30,13 @@ function App() {
         setImages([...images, url])
     }
 
+    const onImageImported = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.item(0)
+        if (file) {
+            addImage(URL.createObjectURL(file))
+        }
+    }
+
     const removeImage = (index: number) => {
         setImages(images.filter((_, i) => i !== index))
     }
@@ -39,8 +46,9 @@ function App() {
         downloadImage(dataURL, `image.${format}`)
     }
 
-    const importImage = () => {
+    const importImage = (importButton: HTMLButtonElement) => {
         importInputRef.current!.click()
+        importButton.blur() // Remove focus
     }
 
     return (
@@ -53,9 +61,9 @@ function App() {
                         <Tool icon={<CursorTextIcon />} onClick={() => setTool(ToolType.Text)} toolType={ToolType.Text} />
                         <Tool icon={<PyramidIcon />} onClick={() => setTool(ToolType.Shape)} toolType={ToolType.Shape} />
                         <Tool icon={<DiceIcon />} onClick={() => { setTool(ToolType.RandomImage); addImage(url) }} toolType={ToolType.RandomImage} />
-                        <button id="import" onClick={() => importImage()} className="toolbar-item" style={{ marginLeft: 'auto' }}>
+                        <button id="import" onClick={(e) => importImage(e.currentTarget)} className="toolbar-item" style={{ marginLeft: 'auto' }}>
                             {<FileImportIcon />}
-                            <input ref={importInputRef} id="import-input" type="file" hidden />
+                            <input accept=".jpg, .jpeg, .png" onChange={onImageImported} ref={importInputRef} id="import-input" type="file" hidden />
                             Import...
                         </button>
                         <button
