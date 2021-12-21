@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import 'components/styles/Canvas.css'
 import { ToolType } from 'components/Tool';
-import Transformable, { TransformData } from './Transformable';
-import { Rect } from 'geometry/Rect';
+import Transformable, { TransformData, Transform, defaultScale } from './Transformable';
 
 export const CANVAS_DEFAULT_WIDTH = 800;
 export const CANVAS_DEFAULT_HEIGHT = 600;
@@ -47,7 +46,7 @@ const Canvas = (props: CanvasProps) => {
         }
     })
 
-    function onSetHasStartedTransform(mouseX: number, mouseY: number, preTransformRect: Rect) {
+    function onSetHasStartedTransform(mouseX: number, mouseY: number, preTransform: Transform) {
         const canvasRect = props.canvasRef.current!.getBoundingClientRect()
 
         setIsSelecting(false)
@@ -59,7 +58,7 @@ const Canvas = (props: CanvasProps) => {
             mouseY: mouseY,
             startMouseX: mouseX,
             startMouseY: mouseY,
-            preTransformRect: preTransformRect,
+            preTransform: preTransform,
             canvasX: canvasRect.x,
             canvasY: canvasRect.y
         })
@@ -73,14 +72,18 @@ const Canvas = (props: CanvasProps) => {
         let ctx = props.canvasRef.current!.getContext('2d')
         const transformable = transformableRefs.current[index]
         const image = imageRefs.current[index]
-        if (transformable) {
-            ctx?.drawImage(
+        if (transformable && ctx) {
+            const scale = transformData?.preTransform.scaleParams!
+            ctx.save()
+            ctx.scale(scale.scaleX, scale.scaleY)
+            ctx.drawImage(
                 image,
-                transformable.offsetLeft,
-                transformable.offsetTop,
-                transformable.offsetWidth,
-                transformable.offsetHeight
+                scale.scaleX * transformable.offsetLeft,
+                scale.scaleY * transformable.offsetTop,
+                scale.scaleX * transformable.offsetWidth,
+                scale.scaleY * transformable.offsetHeight
             )
+            ctx.restore()
         }
     }
 
@@ -119,11 +122,14 @@ const Canvas = (props: CanvasProps) => {
             startMouseY: e.clientY,
             canvasX: canvasRect.x,
             canvasY: canvasRect.y,
-            preTransformRect: {
-                left: e.clientX - canvasRect.x,
-                top: e.clientY - canvasRect.y,
-                width: 0,
-                height: 0
+            preTransform: {
+                rect: {
+                    left: e.clientX - canvasRect.x,
+                    top: e.clientY - canvasRect.y,
+                    width: 0,
+                    height: 0
+                },
+                scaleParams: defaultScale()
             }
         })
     }
@@ -140,7 +146,7 @@ const Canvas = (props: CanvasProps) => {
                 startMouseY: transformData.startMouseY,
                 canvasX: canvasRect.x,
                 canvasY: canvasRect.y,
-                preTransformRect: transformData.preTransformRect
+                preTransform: transformData.preTransform
             })
         } else if (isSelecting && selectionTransformData) {
             const canvasRect = props.canvasRef.current!.getBoundingClientRect()
@@ -151,7 +157,7 @@ const Canvas = (props: CanvasProps) => {
                 startMouseY: selectionTransformData.startMouseY,
                 canvasX: canvasRect.x,
                 canvasY: canvasRect.y,
-                preTransformRect: selectionTransformData.preTransformRect
+                preTransform: selectionTransformData.preTransform
             })
         }
     }
@@ -161,7 +167,7 @@ const Canvas = (props: CanvasProps) => {
         if (selectionTransformData && isSelectionShown) {
             const eraseWidth = selectionTransformData.mouseX - selectionTransformData.startMouseX
             const eraseHeight = selectionTransformData.mouseY - selectionTransformData.startMouseY
-            ctx?.clearRect(selectionTransformData.preTransformRect.left, selectionTransformData.preTransformRect.top, eraseWidth, eraseHeight)
+            ctx?.clearRect(selectionTransformData.preTransform.rect.left, selectionTransformData.preTransform.rect.top, eraseWidth, eraseHeight)
         }
     }
 

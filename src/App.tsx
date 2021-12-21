@@ -35,7 +35,7 @@ function App() {
     <div>
       <header className="app-header">
         <div>
-          <span onClick={() => setUrl('https://picsum.photos/500/300/?random')} style={{ fontSize: 14, cursor: 'pointer' }}>https://picsum.photos/500/300/?random</span>
+          <span onClick={() => setUrl('https://picsum.photos/500/300')} style={{ fontSize: 14, cursor: 'pointer' }}>https://picsum.photos/500/300</span>
           <div className="tool-panel">
             <Tool onClick={() => setTool(ToolType.Select)} toolType={ToolType.Select} />
             <Tool onClick={() => setTool(ToolType.Text)} toolType={ToolType.Text} />
