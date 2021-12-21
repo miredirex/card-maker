@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import './App.css';
 import Canvas, { CANVAS_DEFAULT_HEIGHT, CANVAS_DEFAULT_WIDTH } from 'components/Canvas';
 import Tool, { ToolType } from 'components/Tool';
+import Action from 'components/Action'
 import { ReactComponent as ChevronDownIcon } from 'icons/chevron-down.svg';
 import { ReactComponent as FrameIcon } from 'icons/frame.svg';
 import { ReactComponent as PyramidIcon } from 'icons/pyramid.svg';
@@ -56,23 +57,21 @@ function App() {
             <header className="app-header">
                 <div>
                     <div className="tool-panel">
-                        <button id="file-menu" className="toolbar-item"><ChevronDownIcon /> File</button>
-                        <Tool icon={<FrameIcon />} onClick={() => setTool(ToolType.Select)} toolType={ToolType.Select} />
-                        <Tool icon={<CursorTextIcon />} onClick={() => setTool(ToolType.Text)} toolType={ToolType.Text} />
-                        <Tool icon={<PyramidIcon />} onClick={() => setTool(ToolType.Shape)} toolType={ToolType.Shape} />
-                        <Tool icon={<DiceIcon />} onClick={() => { setTool(ToolType.RandomImage); addImage(url) }} toolType={ToolType.RandomImage} />
-                        <button id="import" onClick={(e) => importImage(e.currentTarget)} className="toolbar-item" style={{ marginLeft: 'auto' }}>
-                            {<FileImportIcon />}
-                            <input accept=".jpg, .jpeg, .png" onChange={onImageImported} ref={importInputRef} id="import-input" type="file" hidden />
-                            Import...
-                        </button>
-                        <button
-                            id="export"
-                            onClick={() => exportImage('png')}
-                            className="toolbar-item">
-                            {<FileExportIcon/>}
-                            Export...
-                        </button>
+                        <div className="buttons-container">
+                            <Action id="file-menu" onClick={() => { }}><ChevronDownIcon /> File</Action>
+                            <Tool icon={<FrameIcon />} onClick={() => setTool(ToolType.Select)} toolType={ToolType.Select} />
+                            <Tool icon={<CursorTextIcon />} onClick={() => setTool(ToolType.Text)} toolType={ToolType.Text} />
+                            <Tool icon={<PyramidIcon />} onClick={() => setTool(ToolType.Shape)} toolType={ToolType.Shape} />
+                            <Tool icon={<DiceIcon />} onClick={() => { setTool(ToolType.RandomImage); addImage(url) }} toolType={ToolType.RandomImage} />
+                        </div>
+                        <div className="buttons-container">
+                            <Action id="import" onClick={(e) => importImage(e.currentTarget)}>
+                                {<FileImportIcon />}
+                                <input accept=".jpg, .jpeg, .png" onChange={onImageImported} ref={importInputRef} id="import-input" type="file" hidden />
+                                Import...
+                            </Action>
+                            <Action id="export" onClick={() => exportImage('png')}>{<FileExportIcon />}Export...</Action>
+                        </div>
                     </div>
                     <Canvas
                         canvasRef={canvasRef}
