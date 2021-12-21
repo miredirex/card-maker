@@ -11,7 +11,7 @@ export interface TransformableProps {
     isGizmoVisible: boolean
     alwaysResize: boolean
     setHasStartedTransform?: (mouseX: number, mouseY: number, preTransform: Transform) => void
-    setHasEndedTransform?: () => void
+    setHasEndedTransform?: (transform: Transform) => void
 }
 
 export interface TransformData {
@@ -20,6 +20,7 @@ export interface TransformData {
     startMouseX: number
     startMouseY: number
     preTransform: Transform
+    transform: Transform
     canvasX: number
     canvasY: number
 }
@@ -44,7 +45,7 @@ export function defaultScale(): ScaleParams {
     return { scaleX: 1, scaleY: 1 }
 }
 
-function calculateNewTransformableRect(
+function calculateNewTransform(
     transformAction: TransformAction,
     transformData: TransformData,
     alwaysResize: boolean,
@@ -92,7 +93,7 @@ function calculateNewTransformableRect(
 const Transformable = React.forwardRef<HTMLDivElement, React.PropsWithChildren<TransformableProps>>((props, ref) => {
     const [currentAction, setCurrentAction] = useState<TransformAction>(TransformAction.None)
 
-    function onTransformStart(transformAction: TransformAction, e: React.MouseEvent<HTMLDivElement>, currentScaleParams: ScaleParams) {
+    function onTransformStart(transformAction: TransformAction, e: React.MouseEvent<HTMLDivElement>, scaleParams: ScaleParams) {
         if (e.isDefaultPrevented()) return
         
         let div = e.currentTarget as HTMLDivElement
@@ -104,39 +105,34 @@ const Transformable = React.forwardRef<HTMLDivElement, React.PropsWithChildren<T
 
         setCurrentAction(transformAction)
         const preTransformRect: Rect = { left: div.offsetLeft, top: div.offsetTop, width: div.offsetWidth, height: div.offsetHeight }
-        const transform: Transform = { rect: preTransformRect, scaleParams: currentScaleParams }
+        const preTransform: Transform = { rect: preTransformRect, scaleParams: scaleParams }
         // Let canvas handle onMouseMove
-        props.setHasStartedTransform?.(e.clientX, e.clientY, transform)
+        props.setHasStartedTransform?.(e.clientX, e.clientY, preTransform)
 
         e.preventDefault()
     }
 
-    function onTransformEnd(_e: React.MouseEvent<HTMLDivElement>) {
-        props.setHasEndedTransform?.()
+    function onTransformEnd(_e: React.MouseEvent<HTMLDivElement>, transform: Transform) {
+        props.setHasEndedTransform?.(transform)
     }
 
-    let left = 0
-    let top = 0
-    let width = props.transformData?.preTransform.rect.width
-    let height = props.transformData?.preTransform.rect.height
-    let scaleParams = props.transformData?.preTransform.scaleParams ?? defaultScale()
+    let transform = props.transformData?.preTransform
 
     if (props.transformData) {
-        const transform = calculateNewTransformableRect(currentAction, props.transformData, props.alwaysResize)
-        left = transform.rect.left
-        top = transform.rect.top
-        width = transform.rect.width
-        height = transform.rect.height
-        scaleParams = transform.scaleParams
+        transform = calculateNewTransform(currentAction, props.transformData, props.alwaysResize)
     }
+
+    const left = transform?.rect.left ?? 0
+    const top = transform?.rect.top ?? 0
+    const scaleParams = transform?.scaleParams ?? defaultScale()
 
     return (
         <div
             ref={ref}
             className="transformable"
-            style={{ position: 'absolute', left: left, top: top, width: width, height: height }}
+            style={{ position: 'absolute', left: left, top: top, width: transform?.rect.width, height: transform?.rect.height }}
             onMouseDown={(event) => onTransformStart(TransformAction.Drag, event, scaleParams)}
-            onMouseUp={(event) => onTransformEnd(event)}>
+            onMouseUp={(event) => onTransformEnd(event, transform!)}>
             <Gizmo
                 onHandleDown={(e) => onTransformStart(TransformAction.Resize, e, scaleParams)}
                 isVisible={props.isGizmoVisible}

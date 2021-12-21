@@ -34,9 +34,7 @@ const Canvas = (props: CanvasProps) => {
     const [isTransforming, setIsTransforming] = useState(false)
     const [transformData, setTransformData] = useState<TransformData>()
     const [selectionTransformData, setSelectionTransformData] = useState<TransformData>()
-
     const imageRefs = useRef<HTMLImageElement[]>([])
-    const transformableRefs = useRef<HTMLDivElement[]>([])
 
     useEffect(() => {
         document.addEventListener('keydown', handleKeyPress)
@@ -59,29 +57,34 @@ const Canvas = (props: CanvasProps) => {
             startMouseX: mouseX,
             startMouseY: mouseY,
             preTransform: preTransform,
+            transform: preTransform,
             canvasX: canvasRect.x,
             canvasY: canvasRect.y
         })
     }
 
-    function onSetHasEndedTransform() {
+    function onSetHasEndedTransform(transform: Transform) {
         setIsTransforming(false)
+        setTransformData({
+            ...transformData!,
+            transform: transform
+        })
     }
 
     function drawImage(index: number) {
         let ctx = props.canvasRef.current!.getContext('2d')
-        const transformable = transformableRefs.current[index]
         const image = imageRefs.current[index]
-        if (transformable && ctx) {
-            const scale = transformData?.preTransform.scaleParams!
+        if (transformData && ctx) {
+            const scale = transformData.transform.scaleParams
+            const rect = transformData.transform.rect
             ctx.save()
             ctx.scale(scale.scaleX, scale.scaleY)
             ctx.drawImage(
                 image,
-                scale.scaleX * transformable.offsetLeft,
-                scale.scaleY * transformable.offsetTop,
-                scale.scaleX * transformable.offsetWidth,
-                scale.scaleY * transformable.offsetHeight
+                scale.scaleX * rect.left,
+                scale.scaleY * rect.top,
+                scale.scaleX * rect.width,
+                scale.scaleY * rect.height
             )
             ctx.restore()
         }
@@ -114,6 +117,15 @@ const Canvas = (props: CanvasProps) => {
         setSelectionIsVisible(true)
 
         const canvasRect = props.canvasRef.current!.getBoundingClientRect()
+        const preTransform: Transform = {
+            rect: {
+                left: e.clientX - canvasRect.x,
+                top: e.clientY - canvasRect.y,
+                width: 0,
+                height: 0
+            },
+            scaleParams: defaultScale()
+        }
 
         setSelectionTransformData({
             mouseX: e.clientX,
@@ -122,15 +134,8 @@ const Canvas = (props: CanvasProps) => {
             startMouseY: e.clientY,
             canvasX: canvasRect.x,
             canvasY: canvasRect.y,
-            preTransform: {
-                rect: {
-                    left: e.clientX - canvasRect.x,
-                    top: e.clientY - canvasRect.y,
-                    width: 0,
-                    height: 0
-                },
-                scaleParams: defaultScale()
-            }
+            preTransform: preTransform,
+            transform: preTransform
         })
     }
 
@@ -140,24 +145,20 @@ const Canvas = (props: CanvasProps) => {
         if (isTransforming && transformData) {
             const canvasRect = props.canvasRef.current!.getBoundingClientRect()
             setTransformData({
+                ...transformData!,
                 mouseX: e.clientX,
                 mouseY: e.clientY,
-                startMouseX: transformData.startMouseX,
-                startMouseY: transformData.startMouseY,
                 canvasX: canvasRect.x,
                 canvasY: canvasRect.y,
-                preTransform: transformData.preTransform
             })
         } else if (isSelecting && selectionTransformData) {
             const canvasRect = props.canvasRef.current!.getBoundingClientRect()
             setSelectionTransformData({
+                ...selectionTransformData!,
                 mouseX: e.clientX,
                 mouseY: e.clientY,
-                startMouseX: selectionTransformData.startMouseX,
-                startMouseY: selectionTransformData.startMouseY,
                 canvasX: canvasRect.x,
                 canvasY: canvasRect.y,
-                preTransform: selectionTransformData.preTransform
             })
         }
     }
@@ -204,7 +205,6 @@ const Canvas = (props: CanvasProps) => {
             {props.images.map((url, index) =>
                 <Transformable
                     key={index}
-                    ref={(el: HTMLDivElement) => transformableRefs.current[index] = el!}
                     isDraggable={selectedTool === ToolType.Select}
                     isGizmoVisible={selectedTool === ToolType.Select}
                     isResizable={selectedTool === ToolType.Select}
