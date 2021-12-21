@@ -1,11 +1,19 @@
 .toolbar-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
     margin-right: 5px;
     margin-bottom: 5px;
-    padding: 5px;
-    background-color: aliceblue;
-    color: black;
+    padding: 7px;
+    background-color: #3E4451;
+    color: white;
     font-size: 0.6em;
-    border: none;
+    border: 1px solid #505868;
     cursor: pointer;
     border-radius: 4px;
+    box-shadow: 0px 8px 8px 0px rgba(0, 0, 0, 0.35);
+}
+
+.toolbar-item svg {
+    margin-right: 5px;
 }

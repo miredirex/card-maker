@@ -5,16 +5,18 @@ export enum ToolType {
     Select,
     Text,
     Shape,
-    Image,
+    RandomImage,
 }
 
 interface ToolProps {
     toolType: ToolType
+    icon?: React.ReactElement,
     onClick: React.MouseEventHandler<HTMLButtonElement>;
 }
 
 const Tool = (props: ToolProps) => {
     return <button onClick={props.onClick} className="toolbar-item">
+        {props.icon}
         {ToolType[props.toolType]}
     </button>
 }
