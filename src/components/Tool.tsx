@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import 'components/styles/Tool.css'
 
 export enum ToolType {
@@ -15,10 +15,19 @@ interface ToolProps {
 }
 
 const Tool = (props: ToolProps) => {
-    return <button onClick={props.onClick} className="toolbar-item">
-        {props.icon}
-        {ToolType[props.toolType]}
-    </button>
+    const [pressed, setIsPressed] = useState(false)
+    const pressedClassName = pressed ? 'pressed' : ''
+
+    return (
+        <button
+            onMouseDown={() => setIsPressed(true)}
+            onMouseLeave={() => setIsPressed(false)}
+            onMouseUp={() => setIsPressed(false)}
+            onClick={props.onClick}
+            className={`toolbar-item ${pressedClassName}`}>
+            {props.icon}
+            {ToolType[props.toolType]}
+        </button>)
 }
 
 export default Tool
