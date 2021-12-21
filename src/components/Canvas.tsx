@@ -16,15 +16,6 @@ interface CanvasProps {
     onRemoveImg: (index: number) => void
 }
 
-interface SelectionState {
-    left: number
-    top: number
-    width: number
-    height: number
-    originalLeft: number
-    originalTop: number
-}
-
 function toolTypeToCursor(toolType: ToolType): string {
     switch (toolType) {
         case ToolType.Select:
@@ -44,13 +35,9 @@ const Canvas = (props: CanvasProps) => {
     const [isTransforming, setIsTransforming] = useState(false)
     const [transformData, setTransformData] = useState<TransformData>()
     const [selectionTransformData, setSelectionTransformData] = useState<TransformData>()
-    const imageRefs = useRef<HTMLImageElement[]>([])
-    // TODO: можно ли лучше?
-    const transformableRefs = useRef<HTMLDivElement[]>([])
 
-    useEffect(() => {
-        imageRefs.current = imageRefs.current.slice(0, props.images.length)
-    }, [props.images])
+    const imageRefs = useRef<HTMLImageElement[]>([])
+    const transformableRefs = useRef<HTMLDivElement[]>([])
 
     useEffect(() => {
         document.addEventListener('keydown', handleKeyPress)
@@ -60,12 +47,8 @@ const Canvas = (props: CanvasProps) => {
         }
     })
 
-    function getCanvasRect(): DOMRect {
-        return props.canvasRef.current!.getBoundingClientRect()
-    }
-
     function onSetHasStartedTransform(mouseX: number, mouseY: number, preTransformRect: Rect) {
-        const canvasRect = getCanvasRect()
+        const canvasRect = props.canvasRef.current!.getBoundingClientRect()
 
         setIsSelecting(false)
         setSelectionIsVisible(false)
@@ -111,10 +94,14 @@ const Canvas = (props: CanvasProps) => {
         props.onRemoveImg(index)
     }
 
-    function removeImages() {
+    function removeImageElements() {
         props.images.forEach((_url, i) => {
             removeImage(i)
         })
+    }
+
+    function resetTransformData() {
+        setTransformData(undefined)
     }
 
     function onSelectStart(e: React.MouseEvent<HTMLDivElement>) {
@@ -187,7 +174,8 @@ const Canvas = (props: CanvasProps) => {
                 break;
             case 'Enter':
                 drawImages()
-                removeImages()
+                removeImageElements()
+                resetTransformData()
                 break;
         }
     }
@@ -217,7 +205,7 @@ const Canvas = (props: CanvasProps) => {
                     canvasWidth={props.width}
                     canvasHeight={props.height}
                     transformData={transformData}
-                    forceResize={false}
+                    alwaysResize={false}
                     setHasStartedTransform={onSetHasStartedTransform}
                     setHasEndedTransform={onSetHasEndedTransform}>
                     <img crossOrigin='anonymous' ref={el => imageRefs.current[index] = el!} src={url} style={{ display: 'block', width: '100%', height: '100%' }} alt="" />
@@ -229,7 +217,7 @@ const Canvas = (props: CanvasProps) => {
                     isDraggable={false}
                     canvasWidth={props.width}
                     canvasHeight={props.height}
-                    forceResize={true}
+                    alwaysResize={true}
                     transformData={selectionTransformData}
                     isGizmoVisible={selectedTool === ToolType.Select} />
             }

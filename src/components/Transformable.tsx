@@ -9,7 +9,7 @@ export interface TransformableProps {
     isResizable: boolean
     isDraggable: boolean
     isGizmoVisible: boolean
-    forceResize: boolean
+    alwaysResize: boolean
     setHasStartedTransform?: (mouseX: number, mouseY: number, preTransformRect: Rect) => void
     setHasEndedTransform?: () => void
 }
@@ -23,7 +23,6 @@ export interface TransformData {
     canvasX: number
     canvasY: number
 }
-
 
 export enum TransformAction {
     None,
@@ -54,7 +53,7 @@ function calculateNewTransformableRect(
     const x = oldRect.left + deltaX + oldRect.width
     const y = oldRect.top + deltaY + oldRect.height
 
-    if (isResizing || props.forceResize) {
+    if (isResizing || props.alwaysResize) {
         return {
             left: (oldRect.width + deltaX < 0) ? x : oldRect.left,
             top: (oldRect.height + deltaY < 0) ? y : oldRect.top,
@@ -76,14 +75,14 @@ const Transformable = React.forwardRef<HTMLDivElement, React.PropsWithChildren<T
         if (e.isDefaultPrevented()) return
         let div = e.currentTarget as HTMLDivElement
 
-        // TODO: use better approach
         if (transformAction == TransformAction.Resize) {
+            // e.currentTarget is the bottom right gizmo handle
             div = e.currentTarget.parentElement?.parentElement?.parentElement! as HTMLDivElement
         }
 
-        // Let canvas handle onMouseMove
         setCurrentAction(transformAction)
         const preTransformRect = { left: div.offsetLeft, top: div.offsetTop, width: div.offsetWidth, height: div.offsetHeight }
+        // Let canvas handle onMouseMove
         props.setHasStartedTransform?.(e.clientX, e.clientY, preTransformRect)
 
         e.preventDefault()

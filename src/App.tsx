@@ -3,6 +3,15 @@ import './App.css';
 import Canvas, { CANVAS_DEFAULT_HEIGHT, CANVAS_DEFAULT_WIDTH } from 'components/Canvas';
 import Tool, { ToolType } from 'components/Tool';
 
+function downloadImage(dataURL: string, filename = 'image.png') {
+  var a = document.createElement('a');
+  a.href = dataURL;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a)
+}
+
 function App() {
   const [selectedTool, setTool] = useState(ToolType.Select)
   const [images, setImages] = useState<string[]>([])
@@ -12,7 +21,7 @@ function App() {
   const addImage = (url: string) => {
     setImages([...images, url])
   }
-  
+
   const removeImage = (index: number) => {
     setImages(images.filter((_, i) => i !== index))
   }
@@ -21,15 +30,6 @@ function App() {
     const dataURL = canvasRef.current!.toDataURL("image/png");
     downloadImage(dataURL)
   }
-
-  const downloadImage = (data: string, filename = 'image.png') => {
-    var a = document.createElement('a');
-    a.href = data;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a)
-}
 
   return (
     <div>
@@ -44,7 +44,13 @@ function App() {
             <input className="toolbar-item" value={url} placeholder="url" onChange={(e) => setUrl(e.target.value)} />
             <button id="export" onClick={() => exportImage()} className="toolbar-item" style={{ marginLeft: 'auto' }}>Export...</button>
           </div>
-          <Canvas canvasRef={canvasRef} width={CANVAS_DEFAULT_WIDTH} height={CANVAS_DEFAULT_HEIGHT} images={images} onRemoveImg={removeImage} tool={selectedTool} />
+          <Canvas
+            canvasRef={canvasRef}
+            width={CANVAS_DEFAULT_WIDTH}
+            height={CANVAS_DEFAULT_HEIGHT}
+            images={images}
+            onRemoveImg={removeImage}
+            tool={selectedTool} />
         </div>
       </header>
     </div>

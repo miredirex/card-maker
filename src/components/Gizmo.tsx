@@ -11,7 +11,6 @@ const Gizmo = (props: React.PropsWithChildren<GizmoProps>) => {
     const handleClassName = (props.isVisible && props.isResizable) ? 'gizmo-handle' : ''
 
     // TODO: сделать изменение размера при помощи других хэндлов, а не только при помощи правого нижнего
-    // TODO: привязать onMouseMove к канваса, а не к этому div'у
     return (
         <div className="gizmo-container" style={{ width: '100%', height: '100%' }}>
             <div className="main-content" style={{ width: '100%', height: '100%' }}>
