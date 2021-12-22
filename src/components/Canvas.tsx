@@ -113,7 +113,7 @@ const Canvas = (props: CanvasProps) => {
         const image = imageRefs.current[index]
         const scale = transformData?.transform?.scaleParams ?? defaultScale()
         const rect = transformData?.transform?.rect ?? { left: 0, top: 0, width: image.offsetWidth, height: image.offsetHeight }
-        
+
         ctx.save()
         ctx.scale(scale.scaleX, scale.scaleY)
         ctx.drawImage(
@@ -136,7 +136,7 @@ const Canvas = (props: CanvasProps) => {
     function drawText() {
         let ctx = props.canvasRef.current!.getContext('2d')
 
-        if (!transformData || !ctx || !editableText) return
+        if (!transformData || !ctx) return
 
         const rect = transformData?.transform.rect!
         const scale = transformData?.transform.scaleParams!
@@ -146,7 +146,7 @@ const Canvas = (props: CanvasProps) => {
         ctx!.save()
         ctx!.scale(scale.scaleX, scale.scaleY)
         ctx!.fillText(
-            editableText,
+            editableText ?? '',
             scale.scaleX * rect.left + flipOffset,
             scale.scaleY * (rect.top + rect.height / 2)
         )

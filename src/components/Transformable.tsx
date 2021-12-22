@@ -100,6 +100,7 @@ const Transformable = React.forwardRef<HTMLDivElement, React.PropsWithChildren<T
         let div = e.currentTarget as HTMLDivElement
 
         if (transformAction === TransformAction.Resize) {
+            if (!props.isResizable) return
             // e.currentTarget is the bottom right gizmo handle
             div = e.currentTarget.parentElement?.parentElement?.parentElement! as HTMLDivElement
         }
