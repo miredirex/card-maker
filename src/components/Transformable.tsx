@@ -12,6 +12,7 @@ export interface TransformableProps {
     alwaysResize: boolean
     setHasStartedTransform?: (mouseX: number, mouseY: number, preTransform: Transform) => void
     setHasEndedTransform?: (transform: Transform) => void
+    onClick?: () => void
 }
 
 export interface TransformData {
@@ -116,6 +117,14 @@ const Transformable = React.forwardRef<HTMLDivElement, React.PropsWithChildren<T
         props.setHasEndedTransform?.(transform)
     }
 
+    function onClick(e: React.MouseEvent<HTMLDivElement>) {
+        if (e.isDefaultPrevented()) return
+
+        props.onClick?.()
+
+        e.preventDefault()
+    }
+
     let transform = props.transformData?.preTransform
 
     if (props.transformData) {
@@ -132,7 +141,8 @@ const Transformable = React.forwardRef<HTMLDivElement, React.PropsWithChildren<T
             className="transformable"
             style={{ position: 'absolute', left: left, top: top, width: transform?.rect.width, height: transform?.rect.height }}
             onMouseDown={(event) => onTransformStart(TransformAction.Drag, event, scaleParams)}
-            onMouseUp={(event) => onTransformEnd(event, transform!)}>
+            onMouseUp={(event) => onTransformEnd(event, transform!)}
+            onClick={(e) => onClick(e)}>
             <Gizmo
                 onHandleDown={(e) => onTransformStart(TransformAction.Resize, e, scaleParams)}
                 isVisible={props.isGizmoVisible}

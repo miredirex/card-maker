@@ -6,6 +6,9 @@ import Transformable, { TransformData, Transform, defaultScale } from './Transfo
 export const CANVAS_DEFAULT_WIDTH = 800;
 export const CANVAS_DEFAULT_HEIGHT = 600;
 
+const TEXT_INPUT_DEFAULT_WIDTH = 200;
+const TEXT_INPUT_DEFAULT_HEIGHT = 50;
+
 interface CanvasProps {
     width: number
     height: number
@@ -28,13 +31,17 @@ function toolTypeToCursor(toolType: ToolType): string {
     }
 }
 
+// TODO: отрефакторить многие функции, разобраться со стейтом
 const Canvas = (props: CanvasProps) => {
     const [isSelectionShown, setSelectionIsVisible] = useState(false)
     const [isSelecting, setIsSelecting] = useState(false)
     const [isTransforming, setIsTransforming] = useState(false)
     const [transformData, setTransformData] = useState<TransformData>()
     const [selectionTransformData, setSelectionTransformData] = useState<TransformData>()
+    const [editableText, setText] = useState<string | null>(null)
     const imageRefs = useRef<HTMLImageElement[]>([])
+    const textInputRef = useRef<HTMLInputElement>(null)
+    const selectedTool = props.tool
 
     useEffect(() => {
         document.addEventListener('keydown', handleKeyPress)
@@ -43,6 +50,34 @@ const Canvas = (props: CanvasProps) => {
             document.removeEventListener('keydown', handleKeyPress)
         }
     })
+
+    function onCanvasClick(e: React.MouseEvent<HTMLDivElement>) {
+        if (e.isDefaultPrevented() || isTransforming) return
+        if (selectedTool !== ToolType.Text) return
+
+        const canvasRect = props.canvasRef.current!.getBoundingClientRect()
+        const transform: Transform = {
+            rect: { 
+                left: e.clientX - canvasRect.x, 
+                top: e.clientY - canvasRect.y, 
+                width: TEXT_INPUT_DEFAULT_WIDTH, 
+                height: TEXT_INPUT_DEFAULT_HEIGHT 
+            },
+            scaleParams: defaultScale()
+        }
+
+        setTransformData({
+            mouseX: e.clientX,
+            mouseY: e.clientY,
+            startMouseX: e.clientX,
+            startMouseY: e.clientY,
+            canvasX: canvasRect.x,
+            canvasY: canvasRect.y,
+            preTransform: transform,
+            transform: transform
+        })
+        setText(editableText ?? '')
+    }
 
     function onSetHasStartedTransform(mouseX: number, mouseY: number, preTransform: Transform) {
         const canvasRect = props.canvasRef.current!.getBoundingClientRect()
@@ -74,36 +109,63 @@ const Canvas = (props: CanvasProps) => {
     function drawImage(index: number) {
         let ctx = props.canvasRef.current!.getContext('2d')
         const image = imageRefs.current[index]
-        if (transformData && ctx) {
-            const scale = transformData.transform.scaleParams
-            const rect = transformData.transform.rect
-            ctx.save()
-            ctx.scale(scale.scaleX, scale.scaleY)
-            ctx.drawImage(
-                image,
-                scale.scaleX * rect.left,
-                scale.scaleY * rect.top,
-                scale.scaleX * rect.width,
-                scale.scaleY * rect.height
-            )
-            ctx.restore()
-        }
+        if (!transformData || !ctx) return
+
+        const scale = transformData.transform.scaleParams
+        const rect = transformData.transform.rect
+        ctx.save()
+        ctx.scale(scale.scaleX, scale.scaleY)
+        ctx.drawImage(
+            image,
+            scale.scaleX * rect.left,
+            scale.scaleY * rect.top,
+            scale.scaleX * rect.width,
+            scale.scaleY * rect.height
+        )
+        ctx.restore()
     }
 
     function drawImages() {
         props.images.forEach((_url, i) => {
             drawImage(i)
+            removeImage(i)
         })
+    }
+
+    function drawText() {
+        let ctx = props.canvasRef.current!.getContext('2d')
+
+        if (!transformData || !ctx || !editableText) return
+
+        const rect = transformData?.transform.rect!
+        const scale = transformData?.transform.scaleParams!
+        const flipOffset = scale.scaleX < 0 ? -rect.width : 0
+
+        ctx!.font = '1em sans-serif'
+        ctx!.save()
+        ctx!.scale(scale.scaleX, scale.scaleY)
+        ctx!.fillText(
+            editableText,
+            scale.scaleX * rect.left + flipOffset,
+            scale.scaleY * (rect.top + rect.height / 2)
+        )
+        ctx!.restore()
+
+        setText(null)
+    }
+
+    function onChangeText(e: React.ChangeEvent<HTMLInputElement>) {
+        setText(e.currentTarget.value)
+    }
+
+    function onClickText() {
+        if (selectedTool === ToolType.Text) {
+            textInputRef.current!.focus()
+        }
     }
 
     function removeImage(index: number) {
         props.onRemoveImg(index)
-    }
-
-    function removeImageElements() {
-        props.images.forEach((_url, i) => {
-            removeImage(i)
-        })
     }
 
     function resetTransformData() {
@@ -181,13 +243,11 @@ const Canvas = (props: CanvasProps) => {
                 break;
             case 'Enter':
                 drawImages()
-                removeImageElements()
+                drawText()
                 resetTransformData()
                 break;
         }
     }
-
-    const selectedTool = props.tool
 
     return (
         <div
@@ -195,13 +255,14 @@ const Canvas = (props: CanvasProps) => {
             onMouseDown={(e) => onSelectStart(e)}
             onMouseMove={(e) => handleMouseMove(e)}
             onMouseUp={() => { setIsTransforming(false); setIsSelecting(false) }}
+            onClick={(e) => onCanvasClick(e)}
             style={{
                 position: 'relative',
                 width: props.width,
                 height: props.height,
                 cursor: toolTypeToCursor(props.tool)
             }}>
-
+            <canvas id="native-canvas" ref={props.canvasRef} width={props.width} height={props.height} />
             {props.images.map((url, index) =>
                 <Transformable
                     key={index}
@@ -214,9 +275,34 @@ const Canvas = (props: CanvasProps) => {
                     alwaysResize={false}
                     setHasStartedTransform={onSetHasStartedTransform}
                     setHasEndedTransform={onSetHasEndedTransform}>
-                    <img crossOrigin='anonymous' ref={el => imageRefs.current[index] = el!} src={url} style={{ display: 'block', width: '100%', height: '100%' }} alt="" />
+                    <img
+                        crossOrigin='anonymous'
+                        ref={el => imageRefs.current[index] = el!}
+                        src={url}
+                        style={{ display: 'block', width: '100%', height: '100%' }} alt="" />
                 </Transformable>
             )}
+            {editableText !== null &&
+                <Transformable
+                    isDraggable={selectedTool === ToolType.Select}
+                    isGizmoVisible={true}
+                    isResizable={selectedTool === ToolType.Select}
+                    canvasWidth={props.width}
+                    canvasHeight={props.height}
+                    transformData={transformData}
+                    alwaysResize={false}
+                    setHasStartedTransform={onSetHasStartedTransform}
+                    setHasEndedTransform={onSetHasEndedTransform}
+                    onClick={() => onClickText()}>
+                    <input
+                        ref={textInputRef}
+                        type='text'
+                        placeholder='Enter Text'
+                        onChange={(e) => onChangeText(e)}
+                        value={editableText}
+                        className='transformable-text' autoFocus={true} />
+                </Transformable>
+            }
             {isSelectionShown &&
                 <Transformable
                     isResizable={false}
@@ -227,7 +313,6 @@ const Canvas = (props: CanvasProps) => {
                     transformData={selectionTransformData}
                     isGizmoVisible={selectedTool === ToolType.Select} />
             }
-            <canvas id="canvas" ref={props.canvasRef} width={props.width} height={props.height} />
         </div>
     )
 }
