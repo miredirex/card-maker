@@ -108,11 +108,12 @@ const Canvas = (props: CanvasProps) => {
 
     function drawImage(index: number) {
         let ctx = props.canvasRef.current!.getContext('2d')
-        const image = imageRefs.current[index]
-        if (!transformData || !ctx) return
+        if (!ctx) return
 
-        const scale = transformData.transform.scaleParams
-        const rect = transformData.transform.rect
+        const image = imageRefs.current[index]
+        const scale = transformData?.transform?.scaleParams ?? defaultScale()
+        const rect = transformData?.transform?.rect ?? { left: 0, top: 0, width: image.offsetWidth, height: image.offsetHeight }
+        
         ctx.save()
         ctx.scale(scale.scaleX, scale.scaleY)
         ctx.drawImage(

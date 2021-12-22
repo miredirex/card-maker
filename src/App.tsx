@@ -47,9 +47,8 @@ function App() {
         downloadImage(dataURL, `image.${format}`)
     }
 
-    const importImage = (importButton: HTMLButtonElement) => {
+    const importImage = () => {
         importInputRef.current!.click()
-        importButton.blur() // Remove focus
     }
 
     return (
@@ -62,10 +61,10 @@ function App() {
                             <Tool isSelected={selectedTool === ToolType.Select} icon={<FrameIcon />} onClick={() => setTool(ToolType.Select)} toolType={ToolType.Select} />
                             <Tool isSelected={selectedTool === ToolType.Text} icon={<CursorTextIcon />} onClick={() => setTool(ToolType.Text)} toolType={ToolType.Text} />
                             <Tool isSelected={selectedTool === ToolType.Shape} icon={<PyramidIcon />} onClick={() => setTool(ToolType.Shape)} toolType={ToolType.Shape} />
-                            <Action id="action-random-image" icon={<DiceIcon />} onClick={() => addImage(url)}>Random Image</Action>
+                            <Action id="action-random-image" icon={<DiceIcon />} onClick={(e) => { addImage(url); e.currentTarget.blur() }}>Random Image</Action>
                         </div>
                         <div className="buttons-container">
-                            <Action icon={<FileImportIcon />} id="action-import" onClick={(e) => importImage(e.currentTarget)}>
+                            <Action icon={<FileImportIcon />} id="action-import" onClick={(e) => { importImage(); e.currentTarget.blur() } }>
                                 <input accept=".jpg, .jpeg, .png" onChange={onImageImported} ref={importInputRef} id="import-input" type="file" hidden />
                                 Import...
                             </Action>
