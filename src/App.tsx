@@ -55,7 +55,7 @@ function App() {
         <div>
             <header className="app-header">
                 <div>
-                    <div className="tool-panel">
+                    <div className="toolbar">
                         <div className="buttons-container">
                             <Action icon={<ChevronDownIcon />} id="action-file-menu" onClick={() => { }}>File</Action>
                             <Tool isSelected={selectedTool === ToolType.Select} icon={<FrameIcon />} onClick={() => setTool(ToolType.Select)} toolType={ToolType.Select} />
@@ -78,6 +78,11 @@ function App() {
                         images={images}
                         onRemoveImg={removeImage}
                         tool={selectedTool} />
+                    <div className="controls">
+                        <span>
+                            <kbd>Enter</kbd> to draw selected item, <kbd>Del</kbd> to erase selected area
+                        </span>
+                    </div>
                 </div>
             </header>
         </div>

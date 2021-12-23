@@ -5,11 +5,11 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
+  font-size: 17px;
   color: white;
 }
 
-.tool-panel {
+.toolbar {
   display: flex;
   justify-content: space-between;
   margin-bottom: 5px;
@@ -18,6 +18,10 @@
 .buttons-container {
   display: flex;
   gap: 5px;
+}
+
+.controls {
+  margin-top: 5px
 }
 
 .input-url-image {
@@ -30,4 +34,17 @@
 #action-file-menu {
   background-color: #31604f;
   border: 1px solid #3b7463;
+}
+
+kbd {
+  background-color: #3E4451;
+  border-radius: 3px;
+  border: 1px solid #505868;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, .2), 0 2px 0 0 #4a5161 inset;
+  color: rgb(235, 235, 235); 
+  display: inline-block;
+  line-height: 1;
+  padding: 2px 4px;
+  white-space: nowrap;
+  font-size: 15px;
 }

@@ -142,7 +142,7 @@ const Canvas = (props: CanvasProps) => {
         const scale = transformData?.transform.scaleParams!
         const flipOffset = scale.scaleX < 0 ? -rect.width : 0
 
-        ctx!.font = '1em sans-serif'
+        ctx!.font = '22px sans-serif'
         ctx!.save()
         ctx!.scale(scale.scaleX, scale.scaleY)
         ctx!.fillText(
