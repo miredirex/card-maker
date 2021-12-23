@@ -23,9 +23,13 @@ function downloadImage(dataURL: string, filename: string) {
 function App() {
     const [selectedTool, setTool] = useState(ToolType.Select)
     const [images, setImages] = useState<string[]>([])
-    const [url, setUrl] = useState('https://picsum.photos/500/300')
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const importInputRef = useRef<HTMLInputElement>(null)
+
+    const addRandomImage = () => {
+        // Random param prevents caching
+        addImage(`https://picsum.photos/500/300?random=${Math.random()}`)
+    }
 
     const addImage = (url: string) => {
         setImages([...images, url])
@@ -61,7 +65,7 @@ function App() {
                             <Tool isSelected={selectedTool === ToolType.Select} icon={<FrameIcon />} onClick={() => setTool(ToolType.Select)} toolType={ToolType.Select} />
                             <Tool isSelected={selectedTool === ToolType.Text} icon={<CursorTextIcon />} onClick={() => setTool(ToolType.Text)} toolType={ToolType.Text} />
                             <Tool isSelected={selectedTool === ToolType.Shape} icon={<PyramidIcon />} onClick={() => setTool(ToolType.Shape)} toolType={ToolType.Shape} />
-                            <Action id="action-random-image" icon={<DiceIcon />} onClick={(e) => { addImage(url); e.currentTarget.blur() }}>Random Image</Action>
+                            <Action id="action-random-image" icon={<DiceIcon />} onClick={(e) => { addRandomImage(); e.currentTarget.blur() }}>Random Image</Action>
                         </div>
                         <div className="buttons-container">
                             <Action icon={<FileImportIcon />} id="action-import" onClick={(e) => { importImage(); e.currentTarget.blur() } }>
