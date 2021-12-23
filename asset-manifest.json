@@ -1,8 +1,8 @@
 {
   "files": {
-    "main.css": "/card-maker/static/css/main.806a607c.css",
-    "main.js": "/card-maker/static/js/main.2c002afc.js",
-    "static/js/787.5dcde9c8.chunk.js": "/card-maker/static/js/787.5dcde9c8.chunk.js",
+    "main.css": "/card-maker/static/css/main.18dd7acf.css",
+    "main.js": "/card-maker/static/js/main.d112c4ef.js",
+    "static/js/27.315b4884.chunk.js": "/card-maker/static/js/27.315b4884.chunk.js",
     "index.html": "/card-maker/index.html",
     "static/media/dice.svg": "/card-maker/static/media/dice.7ea49183a745b31bb35989a2f75eb225.svg",
     "static/media/frame.svg": "/card-maker/static/media/frame.29dd9f32b650930c274c4f5f9283b5b6.svg",
@@ -10,13 +10,10 @@
     "static/media/file-export.svg": "/card-maker/static/media/file-export.652d9c4611dbfee159a1e53bc7811c7b.svg",
     "static/media/file-import.svg": "/card-maker/static/media/file-import.1c1c83fb83836979347a07ecae2518e1.svg",
     "static/media/pyramid.svg": "/card-maker/static/media/pyramid.9a8e691148b2830d18c9edca401e1699.svg",
-    "static/media/chevron-down.svg": "/card-maker/static/media/chevron-down.4627b3a5391da02543ea67be3ee89612.svg",
-    "main.806a607c.css.map": "/card-maker/static/css/main.806a607c.css.map",
-    "main.2c002afc.js.map": "/card-maker/static/js/main.2c002afc.js.map",
-    "787.5dcde9c8.chunk.js.map": "/card-maker/static/js/787.5dcde9c8.chunk.js.map"
+    "static/media/chevron-down.svg": "/card-maker/static/media/chevron-down.4627b3a5391da02543ea67be3ee89612.svg"
   },
   "entrypoints": [
-    "static/css/main.806a607c.css",
-    "static/js/main.2c002afc.js"
+    "static/css/main.18dd7acf.css",
+    "static/js/main.d112c4ef.js"
   ]
 }
