@@ -1,19 +1,24 @@
 {
   "files": {
-    "main.css": "/card-maker/static/css/main.18dd7acf.css",
-    "main.js": "/card-maker/static/js/main.d112c4ef.js",
-    "static/js/27.315b4884.chunk.js": "/card-maker/static/js/27.315b4884.chunk.js",
+    "main.css": "/card-maker/static/css/main.7fc14b54.chunk.css",
+    "main.js": "/card-maker/static/js/main.461bef03.chunk.js",
+    "runtime-main.js": "/card-maker/static/js/runtime-main.a2307462.js",
+    "static/js/2.02081258.chunk.js": "/card-maker/static/js/2.02081258.chunk.js",
+    "static/js/3.0e197d87.chunk.js": "/card-maker/static/js/3.0e197d87.chunk.js",
     "index.html": "/card-maker/index.html",
-    "static/media/dice.svg": "/card-maker/static/media/dice.7ea49183a745b31bb35989a2f75eb225.svg",
-    "static/media/frame.svg": "/card-maker/static/media/frame.29dd9f32b650930c274c4f5f9283b5b6.svg",
-    "static/media/cursor-text.svg": "/card-maker/static/media/cursor-text.2d207ed985fedec02de53dd799d772e2.svg",
-    "static/media/file-export.svg": "/card-maker/static/media/file-export.652d9c4611dbfee159a1e53bc7811c7b.svg",
-    "static/media/file-import.svg": "/card-maker/static/media/file-import.1c1c83fb83836979347a07ecae2518e1.svg",
-    "static/media/pyramid.svg": "/card-maker/static/media/pyramid.9a8e691148b2830d18c9edca401e1699.svg",
-    "static/media/chevron-down.svg": "/card-maker/static/media/chevron-down.4627b3a5391da02543ea67be3ee89612.svg"
+    "static/js/2.02081258.chunk.js.LICENSE.txt": "/card-maker/static/js/2.02081258.chunk.js.LICENSE.txt",
+    "static/media/chevron-down.4627b3a5.svg": "/card-maker/static/media/chevron-down.4627b3a5.svg",
+    "static/media/cursor-text.2d207ed9.svg": "/card-maker/static/media/cursor-text.2d207ed9.svg",
+    "static/media/dice.7ea49183.svg": "/card-maker/static/media/dice.7ea49183.svg",
+    "static/media/file-export.652d9c46.svg": "/card-maker/static/media/file-export.652d9c46.svg",
+    "static/media/file-import.1c1c83fb.svg": "/card-maker/static/media/file-import.1c1c83fb.svg",
+    "static/media/frame.29dd9f32.svg": "/card-maker/static/media/frame.29dd9f32.svg",
+    "static/media/pyramid.9a8e6911.svg": "/card-maker/static/media/pyramid.9a8e6911.svg"
   },
   "entrypoints": [
-    "static/css/main.18dd7acf.css",
-    "static/js/main.d112c4ef.js"
+    "static/js/runtime-main.a2307462.js",
+    "static/js/2.02081258.chunk.js",
+    "static/css/main.7fc14b54.chunk.css",
+    "static/js/main.461bef03.chunk.js"
   ]
 }
