@@ -10,9 +10,10 @@ export interface TransformableProps {
     isDraggable: boolean
     isGizmoVisible: boolean
     alwaysResize: boolean
+    zIndex?: number
     setHasStartedTransform?: (mouseX: number, mouseY: number, preTransform: Transform) => void
     setHasEndedTransform?: (transform: Transform) => void
-    onClick?: () => void
+    onClick?: (e: React.MouseEvent<HTMLDivElement>) => void
 }
 
 export interface TransformData {
@@ -96,11 +97,12 @@ const Transformable = React.forwardRef<HTMLDivElement, React.PropsWithChildren<T
 
     function onTransformStart(transformAction: TransformAction, e: React.MouseEvent<HTMLDivElement>, scaleParams: ScaleParams) {
         if (e.isDefaultPrevented()) return
+        if (!props.isDraggable && transformAction === TransformAction.Drag) return
+        if (!props.isResizable && transformAction === TransformAction.Resize) return
         
         let div = e.currentTarget as HTMLDivElement
 
         if (transformAction === TransformAction.Resize) {
-            if (!props.isResizable) return
             // e.currentTarget is the bottom right gizmo handle
             div = e.currentTarget.parentElement?.parentElement?.parentElement! as HTMLDivElement
         }
@@ -115,14 +117,13 @@ const Transformable = React.forwardRef<HTMLDivElement, React.PropsWithChildren<T
     }
 
     function onTransformEnd(_e: React.MouseEvent<HTMLDivElement>, transform: Transform) {
+        if (!props.isDraggable && !props.isResizable) return
         props.setHasEndedTransform?.(transform)
     }
 
     function onClick(e: React.MouseEvent<HTMLDivElement>) {
         if (e.isDefaultPrevented()) return
-
-        props.onClick?.()
-
+        props.onClick?.(e)
         e.preventDefault()
     }
 
@@ -135,12 +136,14 @@ const Transformable = React.forwardRef<HTMLDivElement, React.PropsWithChildren<T
     const left = transform?.rect.left ?? 0
     const top = transform?.rect.top ?? 0
     const scaleParams = transform?.scaleParams ?? defaultScale()
+    
+    const cursor = props.isDraggable ? 'grab' : undefined
 
     return (
         <div
             ref={ref}
             className="transformable"
-            style={{ position: 'absolute', left: left, top: top, width: transform?.rect.width, height: transform?.rect.height }}
+            style={{ position: 'absolute', left: left, top: top, width: transform?.rect.width, height: transform?.rect.height, zIndex: props.zIndex, cursor: cursor }}
             onMouseDown={(event) => onTransformStart(TransformAction.Drag, event, scaleParams)}
             onMouseUp={(event) => onTransformEnd(event, transform!)}
             onClick={(e) => onClick(e)}>

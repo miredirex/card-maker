@@ -10,6 +10,8 @@ import { ReactComponent as FileExportIcon } from 'icons/file-export.svg';
 import { ReactComponent as FileImportIcon } from 'icons/file-import.svg';
 import { ReactComponent as CursorTextIcon } from 'icons/cursor-text.svg';
 import { ReactComponent as DiceIcon } from 'icons/dice.svg';
+import { CanvasDrawable } from 'canvas/CanvasDrawable';
+import { DrawableType } from 'canvas/DrawableType';
 
 function downloadImage(dataURL: string, filename: string) {
     var a = document.createElement('a');
@@ -22,7 +24,7 @@ function downloadImage(dataURL: string, filename: string) {
 
 function App() {
     const [selectedTool, setTool] = useState(ToolType.Select)
-    const [images, setImages] = useState<string[]>([])
+    const [drawables, setDrawables] = useState<CanvasDrawable[]>([])
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const importInputRef = useRef<HTMLInputElement>(null)
 
@@ -32,7 +34,20 @@ function App() {
     }
 
     const addImage = (url: string) => {
-        setImages([...images, url])
+        setDrawables([...drawables, { data: url, type: DrawableType.Image }])
+    }
+
+    const addText = () => {
+        setDrawables([...drawables, { data: '', type: DrawableType.Text }])
+    }
+
+    const changeText = (index: number, text: string) => {
+        setDrawables(drawables.map((d, i) => {
+            if (index === i)
+                return {...d, data: text}
+            else 
+                return d
+        }))
     }
 
     const onImageImported = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,8 +57,8 @@ function App() {
         }
     }
 
-    const removeImage = (index: number) => {
-        setImages(images.filter((_, i) => i !== index))
+    const removeDrawable = (index: number) => {
+        setDrawables(drawables.filter((_, i) => i !== index))
     }
 
     const exportImage = (format: string) => {
@@ -79,8 +94,10 @@ function App() {
                         canvasRef={canvasRef}
                         width={CANVAS_DEFAULT_WIDTH}
                         height={CANVAS_DEFAULT_HEIGHT}
-                        images={images}
-                        onRemoveImg={removeImage}
+                        drawables={drawables}
+                        onRemoveDrawable={removeDrawable}
+                        onAddText={addText}
+                        onChangeText={changeText}
                         tool={selectedTool} />
                     <div className="controls">
                         <span>

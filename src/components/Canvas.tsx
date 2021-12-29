@@ -2,6 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import 'components/styles/Canvas.css'
 import { ToolType } from 'components/Tool';
 import Transformable, { TransformData, Transform, defaultScale } from './Transformable';
+import { CanvasDrawable } from 'canvas/CanvasDrawable';
+import { DrawableType } from 'canvas/DrawableType';
 
 export const CANVAS_DEFAULT_WIDTH = 800;
 export const CANVAS_DEFAULT_HEIGHT = 600;
@@ -13,9 +15,12 @@ interface CanvasProps {
     width: number
     height: number
     tool: ToolType
-    images: string[]
+    // TODO: move from App to canvas component as useState?
+    drawables: CanvasDrawable[]
     canvasRef: React.RefObject<HTMLCanvasElement>
-    onRemoveImg: (index: number) => void
+    onRemoveDrawable: (index: number) => void
+    onAddText: () => void 
+    onChangeText: (index: number, text: string) => void
 }
 
 function toolTypeToCursor(toolType: ToolType): string {
@@ -36,12 +41,19 @@ const Canvas = (props: CanvasProps) => {
     const [isSelectionShown, setSelectionIsVisible] = useState(false)
     const [isSelecting, setIsSelecting] = useState(false)
     const [isTransforming, setIsTransforming] = useState(false)
-    const [transformData, setTransformData] = useState<TransformData>()
+    const [transformDataArray, setTransformDataArray] = useState<(TransformData|null)[]>([])
     const [selectionTransformData, setSelectionTransformData] = useState<TransformData>()
-    const [editableText, setText] = useState<string | null>(null)
-    const imageRefs = useRef<HTMLImageElement[]>([])
-    const textInputRef = useRef<HTMLInputElement>(null)
+    const drawableRefs = useRef<HTMLElement[]>([])
+    const [selectedIndex, setSelectedIndex] = useState<number>(-1)
     const selectedTool = props.tool
+
+    useEffect(() => {
+        // nulls are "reservation slots", transformDataArray.length == props.drawable.length
+        setTransformDataArray(arr => props.drawables.map((_, i) => {
+            return arr[i] ?? null
+        }))
+        setSelectedIndex(props.drawables.length - 1)
+    }, [props.drawables])
 
     useEffect(() => {
         document.addEventListener('keydown', handleKeyPress)
@@ -50,6 +62,14 @@ const Canvas = (props: CanvasProps) => {
             document.removeEventListener('keydown', handleKeyPress)
         }
     })
+
+    function updateTransformData(index: number, newData: TransformData) {
+        setTransformDataArray(transformDataArray.map((sameData, i) => i === index ? newData : sameData))
+    }
+
+    function removeTransformData(index: number) {
+        setTransformDataArray(transformDataArray.filter((_, i) => index !== i))
+    }
 
     function onCanvasClick(e: React.MouseEvent<HTMLDivElement>) {
         if (e.isDefaultPrevented() || isTransforming) return
@@ -66,7 +86,7 @@ const Canvas = (props: CanvasProps) => {
             scaleParams: defaultScale()
         }
 
-        setTransformData({
+        setTransformDataArray([...transformDataArray, {
             mouseX: e.clientX,
             mouseY: e.clientY,
             startMouseX: e.clientX,
@@ -75,18 +95,19 @@ const Canvas = (props: CanvasProps) => {
             canvasY: canvasRect.y,
             preTransform: transform,
             transform: transform
-        })
-        setText(editableText ?? '')
+        }])
+        props.onAddText()
     }
 
-    function onSetHasStartedTransform(mouseX: number, mouseY: number, preTransform: Transform) {
+    function onSetHasStartedTransform(drawableIndex: number, mouseX: number, mouseY: number, preTransform: Transform) {
         const canvasRect = props.canvasRef.current!.getBoundingClientRect()
 
         setIsSelecting(false)
         setSelectionIsVisible(false)
         setIsTransforming(true)
 
-        setTransformData({
+        setSelectedIndex(drawableIndex)
+        updateTransformData(drawableIndex, {
             mouseX: mouseX,
             mouseY: mouseY,
             startMouseX: mouseX,
@@ -98,21 +119,38 @@ const Canvas = (props: CanvasProps) => {
         })
     }
 
-    function onSetHasEndedTransform(transform: Transform) {
+    function onSetHasEndedTransform(drawableIndex: number, transform: Transform) {
         setIsTransforming(false)
-        setTransformData({
-            ...transformData!,
+        updateTransformData(drawableIndex, {
+            ...transformDataArray[drawableIndex]!,
             transform: transform
         })
     }
 
-    function drawImage(index: number) {
-        let ctx = props.canvasRef.current!.getContext('2d')
-        if (!ctx) return
+    function drawSelected() {
+        if (selectedIndex === -1) return
 
-        const image = imageRefs.current[index]
-        const scale = transformData?.transform?.scaleParams ?? defaultScale()
-        const rect = transformData?.transform?.rect ?? { left: 0, top: 0, width: image.offsetWidth, height: image.offsetHeight }
+        switch (props.drawables[selectedIndex].type) {
+            case DrawableType.Image:
+                drawImage()
+                break
+            case DrawableType.Text:
+                drawText()
+                break
+        }
+    }
+
+    function removeSelected() {
+        removeTransformData(selectedIndex)
+        props.onRemoveDrawable(selectedIndex)
+    }
+
+    function drawImage() {
+        let ctx = props.canvasRef.current!.getContext('2d')!
+
+        const image = drawableRefs.current[selectedIndex] as HTMLImageElement
+        const scale = transformDataArray[selectedIndex]?.transform?.scaleParams ?? defaultScale()
+        const rect = transformDataArray[selectedIndex]?.transform?.rect ?? { left: 0, top: 0, width: image.offsetWidth, height: image.offsetHeight }
 
         ctx.save()
         ctx.scale(scale.scaleX, scale.scaleY)
@@ -126,56 +164,40 @@ const Canvas = (props: CanvasProps) => {
         ctx.restore()
     }
 
-    function drawImages() {
-        props.images.forEach((_url, i) => {
-            drawImage(i)
-            removeImage(i)
-        })
-    }
-
     function drawText() {
-        let ctx = props.canvasRef.current!.getContext('2d')
+        let ctx = props.canvasRef.current!.getContext('2d')!
 
-        if (!transformData || !ctx) return
-
-        const rect = transformData?.transform.rect!
-        const scale = transformData?.transform.scaleParams!
+        const rect = transformDataArray[selectedIndex]?.transform.rect!
+        const scale = transformDataArray[selectedIndex]?.transform.scaleParams!
         const flipOffset = scale.scaleX < 0 ? -rect.width : 0
+        const inputField = drawableRefs.current[selectedIndex] as HTMLInputElement
 
         ctx!.font = '22px sans-serif'
         ctx!.save()
         ctx!.scale(scale.scaleX, scale.scaleY)
         ctx!.fillText(
-            editableText ?? '',
+            inputField.value ?? '',
             scale.scaleX * rect.left + flipOffset,
             scale.scaleY * (rect.top + rect.height / 2)
         )
         ctx!.restore()
-
-        setText(null)
     }
 
-    function onChangeText(e: React.ChangeEvent<HTMLInputElement>) {
-        setText(e.currentTarget.value)
+    function onChangeText(index: number, e: React.ChangeEvent<HTMLInputElement>) {
+        props.onChangeText(index, e.currentTarget.value)
     }
 
-    function onClickText() {
-        if (selectedTool === ToolType.Text) {
-            textInputRef.current!.focus()
+    function onClickTransformable(drawableIndex: number, e: React.MouseEvent<HTMLDivElement>) {
+        if (selectedTool === ToolType.Text && props.drawables[drawableIndex].type === DrawableType.Text) {
+            const input = drawableRefs.current[drawableIndex] as HTMLInputElement
+            input.focus()
+            setSelectedIndex(drawableIndex)
+        } else {
+            onCanvasClick(e)
         }
     }
 
-    function removeImage(index: number) {
-        props.onRemoveImg(index)
-    }
-
-    function resetTransformData() {
-        setTransformData(undefined)
-    }
-
     function onSelectStart(e: React.MouseEvent<HTMLDivElement>) {
-        if (props.images.length !== 0) return
-
         setIsSelecting(true)
         setSelectionIsVisible(true)
 
@@ -205,10 +227,10 @@ const Canvas = (props: CanvasProps) => {
     function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
         e.preventDefault()
 
-        if (isTransforming && transformData) {
+        if (isTransforming && selectedIndex !== -1) {
             const canvasRect = props.canvasRef.current!.getBoundingClientRect()
-            setTransformData({
-                ...transformData!,
+            updateTransformData(selectedIndex, {
+                ...transformDataArray[selectedIndex]!,
                 mouseX: e.clientX,
                 mouseY: e.clientY,
                 canvasX: canvasRect.x,
@@ -243,10 +265,30 @@ const Canvas = (props: CanvasProps) => {
                 eraseSelectedArea()
                 break;
             case 'Enter':
-                drawImages()
-                drawText()
-                resetTransformData()
+                drawSelected()
+                removeSelected()
                 break;
+        }
+    }
+
+    function drawableToElement(index: number, drawable: CanvasDrawable): JSX.Element {
+        switch (drawable.type) {
+            case DrawableType.Image:
+                return <img
+                    crossOrigin='anonymous'
+                    ref={el => drawableRefs.current[index] = el!}
+                    src={drawable.data}
+                    style={{ display: 'block', width: '100%', height: '100%' }} alt="" />
+            case DrawableType.Text:
+                return <input
+                    ref={el => drawableRefs.current[index] = el!}
+                    type='text'
+                    placeholder='Enter Text'
+                    onChange={(e) => onChangeText(index, e)}
+                    value={drawable.data}
+                    className='transformable-text' autoFocus={true} />
+            default:
+                return <></>
         }
     }
 
@@ -264,46 +306,23 @@ const Canvas = (props: CanvasProps) => {
                 cursor: toolTypeToCursor(props.tool)
             }}>
             <canvas id="native-canvas" ref={props.canvasRef} width={props.width} height={props.height} />
-            {props.images.map((url, index) =>
+            {props.drawables.map((d, index) =>
                 <Transformable
                     key={index}
                     isDraggable={selectedTool === ToolType.Select}
-                    isGizmoVisible={selectedTool === ToolType.Select}
-                    isResizable={selectedTool === ToolType.Select}
+                    isGizmoVisible={true}
+                    isResizable={selectedTool === ToolType.Select && index === selectedIndex}
                     canvasWidth={props.width}
                     canvasHeight={props.height}
-                    transformData={transformData}
+                    transformData={transformDataArray[index] ?? undefined}
                     alwaysResize={false}
-                    setHasStartedTransform={onSetHasStartedTransform}
-                    setHasEndedTransform={onSetHasEndedTransform}>
-                    <img
-                        crossOrigin='anonymous'
-                        ref={el => imageRefs.current[index] = el!}
-                        src={url}
-                        style={{ display: 'block', width: '100%', height: '100%' }} alt="" />
+                    setHasStartedTransform={(mouseX, mouseY, preTransform) => onSetHasStartedTransform(index, mouseX, mouseY, preTransform)}
+                    setHasEndedTransform={(transform) => onSetHasEndedTransform(index, transform)}
+                    onClick={(e) => onClickTransformable(index, e)}
+                    zIndex={selectedIndex === index ? props.drawables.length : 0}>
+                    {drawableToElement(index, d)}
                 </Transformable>
             )}
-            {editableText !== null &&
-                <Transformable
-                    isDraggable={selectedTool === ToolType.Select}
-                    isGizmoVisible={true}
-                    isResizable={selectedTool === ToolType.Select}
-                    canvasWidth={props.width}
-                    canvasHeight={props.height}
-                    transformData={transformData}
-                    alwaysResize={false}
-                    setHasStartedTransform={onSetHasStartedTransform}
-                    setHasEndedTransform={onSetHasEndedTransform}
-                    onClick={() => onClickText()}>
-                    <input
-                        ref={textInputRef}
-                        type='text'
-                        placeholder='Enter Text'
-                        onChange={(e) => onChangeText(e)}
-                        value={editableText}
-                        className='transformable-text' autoFocus={true} />
-                </Transformable>
-            }
             {isSelectionShown &&
                 <Transformable
                     isResizable={false}

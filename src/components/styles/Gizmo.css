@@ -3,7 +3,6 @@
     position: absolute;
     left: 0;
     top: 0;
-    cursor: grab;
     grid-template-columns: repeat(2, 1fr);
     background: 
         linear-gradient(90deg, white 50%, black 50%), 
