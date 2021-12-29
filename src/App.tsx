@@ -100,9 +100,12 @@ function App() {
                         onChangeText={changeText}
                         tool={selectedTool} />
                     <div className="controls">
-                        <span>
+                        <div>
                             <kbd>Enter</kbd> to draw selected item, <kbd>Del</kbd> to erase selected area
-                        </span>
+                        </div>
+                        <div>
+                            <kbd>Ctrl-Z</kbd> to undo, <kbd>Ctrl-Y</kbd> to redo
+                        </div>
                     </div>
                 </div>
             </header>

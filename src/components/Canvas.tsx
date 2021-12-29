@@ -4,6 +4,8 @@ import { ToolType } from 'components/Tool';
 import Transformable, { TransformData, Transform, defaultScale } from './Transformable';
 import { CanvasDrawable } from 'canvas/CanvasDrawable';
 import { DrawableType } from 'canvas/DrawableType';
+import { CanvasState } from 'canvas/CanvasState';
+import useUndo from 'history/history';
 
 export const CANVAS_DEFAULT_WIDTH = 800;
 export const CANVAS_DEFAULT_HEIGHT = 600;
@@ -47,6 +49,19 @@ const Canvas = (props: CanvasProps) => {
     const [selectedIndex, setSelectedIndex] = useState<number>(-1)
     const selectedTool = props.tool
 
+    // History
+    const [
+        canvasState,
+        {
+            set: setCanvasState,
+            reset: resetCanvasState,
+            undo,
+            redo,
+            canUndo,
+            canRedo,
+        },
+    ] = useUndo<CanvasState>({})
+
     useEffect(() => {
         // nulls are "reservation slots", transformDataArray.length == props.drawable.length
         setTransformDataArray(arr => props.drawables.map((_, i) => {
@@ -62,6 +77,22 @@ const Canvas = (props: CanvasProps) => {
             document.removeEventListener('keydown', handleKeyPress)
         }
     })
+    
+    useEffect(() => {
+        const imageData = canvasState.present.imageData
+        const ctx = props.canvasRef.current?.getContext('2d')!
+        if (imageData) {
+            ctx.clearRect(0, 0, props.width, props.height)
+            ctx.putImageData(imageData, 0, 0)
+        } else {
+            ctx.clearRect(0, 0, props.width, props.height)
+        }
+    }, [canvasState, props.canvasRef, props.width, props.height])
+
+    function saveCanvasState() {
+        const imageData = props.canvasRef.current?.getContext('2d')?.getImageData(0, 0, props.width, props.height)!
+        setCanvasState({imageData: imageData})
+    }
 
     function updateTransformData(index: number, newData: TransformData) {
         setTransformDataArray(transformDataArray.map((sameData, i) => i === index ? newData : sameData))
@@ -263,11 +294,19 @@ const Canvas = (props: CanvasProps) => {
         switch (e.code) {
             case 'Delete':
                 eraseSelectedArea()
-                break;
+                saveCanvasState()
+                break
             case 'Enter':
                 drawSelected()
                 removeSelected()
-                break;
+                saveCanvasState()
+                break
+            case 'KeyZ':
+                if (e.ctrlKey && canUndo) undo()
+                break
+            case 'KeyY':
+                if (e.ctrlKey && canRedo) redo()
+                break
         }
     }
 
